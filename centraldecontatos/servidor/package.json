@@ -1,0 +1,19 @@
+{
+  "name": "centraldecontatos-whatsapp",
+  "version": "3.0.0",
+  "description": "Servidor WhatsApp do plugin Central de Contatos para GLPI 11 e 12",
+  "main": "servidor.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node servidor.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "pino": "^9.4.0",
+    "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

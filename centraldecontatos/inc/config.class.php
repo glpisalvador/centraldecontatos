@@ -80,7 +80,44 @@ class PluginCentraldecontatosConfig extends CommonDBTM
             'remetente_email'    => '',
             'remetente_nome'     => '',
             'responder_para'     => '',
+            // Servidor WhatsApp próprio
+            'wa_ativo'             => '1',
+            'wa_porta'             => '3470',
+            'wa_token'             => '',
+            'wa_webhook_url'       => '',
+            'wa_tls_inseguro'      => '0',
+            'wa_midia_max_mb'      => '16',
+            'wa_numero'            => '',
+            'wa_dependencias_hash' => '',
+            'wa_registrar_recebidas' => '1',
+            'wa_recebidas_privado' => '1',
+            'wa_avisar_novas'      => '1',
+            'wa_confirmar_leitura' => '1',
+            'wa_importado'         => '0',
         ];
+    }
+
+    /**
+     * Chave do telefone para o WhatsApp: só dígitos com o código do país. Celular brasileiro sem o nono
+     * dígito (55 + DDD + 8 dígitos começando em 6 a 9) ganha o 9, para o mesmo contato ter uma só conversa.
+     */
+    public static function chaveTelefone(string $numero): string
+    {
+        $d = self::numeroWhatsapp($numero);
+        if (strlen($d) === 12 && str_starts_with($d, '55') && in_array($d[4], ['6', '7', '8', '9'], true)) {
+            $d = substr($d, 0, 4) . '9' . substr($d, 4);
+        }
+        return $d;
+    }
+
+    /** +55 (71) 99623-0998 a partir da chave */
+    public static function telefoneExibicao(string $chave): string
+    {
+        $d = (string) preg_replace('/\D+/', '', $chave);
+        if (str_starts_with($d, '55') && in_array(strlen($d), [12, 13], true)) {
+            return '+55 ' . self::numeroExibicao(substr($d, 2));
+        }
+        return $d !== '' ? '+' . $d : '';
     }
 
     private static ?array $centraldecontatosConfigs = null;
