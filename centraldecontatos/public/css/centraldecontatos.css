@@ -1589,30 +1589,229 @@ input.centraldecontatos-check:indeterminate::after {
     margin: 0;
 }
 
-/* Salvar / limpar conversa */
-.centraldecontatos-wa-salvar {
-    position: relative;
-}
-
-.centraldecontatos-wa-salvar .centraldecontatos-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: rgba(229, 165, 75, 0.95);
-}
-
-.centraldecontatos-wa-salvar .centraldecontatos-badge[hidden] {
-    display: none;
-}
-
+/* Botões do topo */
 .centraldecontatos-wa-topo-acoes .btn {
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
+.centraldecontatos-wa-topo-acoes .btn[hidden] {
+    display: none;
+}
+
 .centraldecontatos-wa-topo-acoes .centraldecontatos-wa-confirmar {
     background: rgba(220, 53, 69, 0.1) !important;
     color: #842029 !important;
     border-color: rgba(220, 53, 69, 0.4) !important;
+}
+
+.centraldecontatos-wa-girando {
+    display: inline-block;
+    animation: centraldecontatos-wa-girar 0.9s linear infinite;
+}
+
+@keyframes centraldecontatos-wa-girar {
+    to { transform: rotate(360deg); }
+}
+
+/* Envio em andamento: nada mais pode ser feito no chat */
+.centraldecontatos-wa-ocupado .centraldecontatos-wa-msg-acoes {
+    visibility: hidden;
+}
+
+.centraldecontatos-wa-ocupado .centraldecontatos-wa-compor {
+    opacity: 0.6;
+}
+
+.centraldecontatos-wa-chat.centraldecontatos-wa-soltar {
+    outline: 2px dashed rgba(229, 165, 75, 0.8);
+    outline-offset: -4px;
+    background: rgba(229, 165, 75, 0.05);
+}
+
+/* Citação (no balão e na barra de resposta) */
+.centraldecontatos-wa-citada {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    cursor: default;
+}
+
+.centraldecontatos-wa-citada[data-ir] {
+    cursor: pointer;
+}
+
+.centraldecontatos-wa-citada-minha {
+    border-left-color: rgba(13, 110, 253, 0.45) !important;
+}
+
+.centraldecontatos-wa-citada-texto {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.centraldecontatos-wa-citada-texto strong {
+    font-size: 11px;
+    font-weight: 600;
+    color: #198754;
+}
+
+.centraldecontatos-wa-citada-minha .centraldecontatos-wa-citada-texto strong {
+    color: #0d6efd;
+}
+
+.centraldecontatos-wa-citada-texto span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+}
+
+.centraldecontatos-wa-citada-mini {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    font-size: 18px;
+}
+
+.centraldecontatos-wa-citada-mini img,
+.centraldecontatos-wa-citada-mini video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.centraldecontatos-wa-citando-corpo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding-left: 8px;
+    border-left: 3px solid rgba(25, 135, 84, 0.45);
+}
+
+.centraldecontatos-wa-citando .centraldecontatos-wa-citada-texto span,
+.centraldecontatos-wa-citando .centraldecontatos-wa-citada-mini {
+    flex: initial;
+}
+
+.centraldecontatos-wa-msg.centraldecontatos-wa-destaque .centraldecontatos-wa-balao {
+    box-shadow: 0 0 0 3px rgba(229, 165, 75, 0.45);
+    transition: box-shadow 0.2s;
+}
+
+/* Gravação de áudio */
+.centraldecontatos-wa-gravacao {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-top: 1px solid #dee2e6;
+    background: #fff;
+    font-size: 12px;
+}
+
+.centraldecontatos-wa-gravacao[hidden],
+.centraldecontatos-wa-compor[hidden],
+.centraldecontatos-wa-validacoes[hidden] {
+    display: none;
+}
+
+.centraldecontatos-wa-gravacao [data-gravacao-tempo] {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #333;
+}
+
+.centraldecontatos-wa-gravacao .text-muted {
+    flex: 1;
+}
+
+.centraldecontatos-wa-gravando-ponto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #dc3545;
+    animation: centraldecontatos-wa-piscar 1s ease-in-out infinite;
+}
+
+@keyframes centraldecontatos-wa-piscar {
+    50% { opacity: 0.25; }
+}
+
+/* Pedido de validação */
+.centraldecontatos-wa-validacoes {
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+    padding: 6px 10px;
+    font-size: 12px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.centraldecontatos-wa-validacoes-titulo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #495057;
+    padding: 2px 0 6px;
+}
+
+.centraldecontatos-wa-validacoes-titulo .btn-close {
+    margin-left: auto;
+    font-size: 9px;
+}
+
+.centraldecontatos-wa-validacoes-vazio {
+    color: #6c757d;
+    padding: 4px 0;
+}
+
+.centraldecontatos-wa-validacao {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.centraldecontatos-wa-validacao > div {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.centraldecontatos-wa-validacao small {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.centraldecontatos-wa-validacao .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.centraldecontatos-wa-validacao-aviso {
+    color: #664d03 !important;
 }

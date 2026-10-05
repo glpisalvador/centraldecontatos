@@ -137,13 +137,13 @@ class PluginCentraldecontatosConversa extends CommonDBTM
         return $item->getFromDB((int) $c['items_id']) && empty($item->fields['is_deleted']) ? $item : null;
     }
 
-    /** Mensagens ainda não gravadas como acompanhamento no item */
-    public static function mensagensNaoSalvas(array $c): array
+    /** Todas as mensagens da conversa, em ordem */
+    public static function todasMensagens(array $c): array
     {
         global $DB;
         return iterator_to_array($DB->request([
             'FROM'  => PluginCentraldecontatosMensagem::TABELA,
-            'WHERE' => ['conversas_id' => (int) $c['id'], 'id' => ['>', (int) $c['salva_ate_id']]],
+            'WHERE' => ['conversas_id' => (int) $c['id']],
             'ORDER' => 'id ASC',
             'LIMIT' => 3000,
         ]), false);
@@ -167,14 +167,14 @@ class PluginCentraldecontatosConversa extends CommonDBTM
         if (!$item->canAddFollowups()) {
             return ['ok' => false, 'mensagem' => 'Você não pode adicionar acompanhamentos em ' . self::rotuloItem(get_class($item), (int) $item->getID()) . '.', 'followup' => 0, 'quantidade' => 0];
         }
-        $msgs = self::mensagensNaoSalvas($c);
+        // Sempre a conversa inteira, com todos os anexos
+        $msgs = self::todasMensagens($c);
         if (!$msgs) {
-            return ['ok' => true, 'mensagem' => 'Nada novo para salvar: todas as mensagens já estão no acompanhamento.', 'followup' => 0, 'quantidade' => 0];
+            return ['ok' => true, 'mensagem' => 'A conversa não tem mensagens para salvar.', 'followup' => 0, 'quantidade' => 0];
         }
-        $anteriores = (int) $c['salva_ate_id'] > 0;
-        $titulo = 'Conversa de WhatsApp' . ($anteriores ? ' (continuação)' : '');
+        $titulo = 'Conversa de WhatsApp';
         $rodape = $motivo === 'limpar'
-            ? 'Conversa limpa no GLPI em ' . Html::convDateTime(date('Y-m-d H:i:s')) . ($anteriores ? ' · as mensagens anteriores estão em acompanhamentos anteriores' : '')
+            ? 'Conversa limpa no GLPI em ' . Html::convDateTime(date('Y-m-d H:i:s'))
             : 'Conversa salva em ' . Html::convDateTime(date('Y-m-d H:i:s'));
         $html = PluginCentraldecontatosMensagem::transcricaoHtml($c, $item, $msgs, $titulo, $rodape);
         $f = new ITILFollowup();
@@ -196,7 +196,7 @@ class PluginCentraldecontatosConversa extends CommonDBTM
             'resultado' => $motivo === 'limpar' ? 'Conversa limpa' : 'Conversa salva', 'observacao' => count($msgs) . ' mensagem(ns)',
             'sucesso' => 1, 'itilfollowups_id' => $fid, 'date_creation' => date('Y-m-d H:i:s'),
         ]);
-        return ['ok' => true, 'mensagem' => count($msgs) . ' mensagem(ns) salva(s) em ' . self::rotuloItem(get_class($item), (int) $item->getID()) . '.', 'followup' => $fid, 'quantidade' => count($msgs)];
+        return ['ok' => true, 'mensagem' => 'Conversa inteira (' . count($msgs) . ' mensagem(ns)) salva em ' . self::rotuloItem(get_class($item), (int) $item->getID()) . '.', 'followup' => $fid, 'quantidade' => count($msgs)];
     }
 
     /**
@@ -226,7 +226,7 @@ class PluginCentraldecontatosConversa extends CommonDBTM
         }
         $DB->delete(PluginCentraldecontatosMensagem::TABELA, ['conversas_id' => $id]);
         $DB->update(self::TABELA, ['nao_lidas' => 0, 'salva_ate_id' => 0, 'ultima_mensagem' => '', 'ultima_direcao' => ''], ['id' => $id]);
-        $onde = $salvo && $salvo['followup'] > 0 ? ' Antes, ' . $salvo['quantidade'] . ' mensagem(ns) foram salvas no acompanhamento de ' . self::rotuloItem((string) $c['itemtype'], (int) $c['items_id']) . '.' : ($salvo ? ' Tudo já estava salvo no acompanhamento do item.' : ' Sem item vinculado: nada foi salvo.');
+        $onde = $salvo && $salvo['followup'] > 0 ? ' Antes, a conversa inteira foi salva no acompanhamento de ' . self::rotuloItem((string) $c['itemtype'], (int) $c['items_id']) . '.' : ($salvo ? '' : ' Sem item vinculado: nada foi salvo.');
         return ['ok' => true, 'mensagem' => 'Conversa limpa (' . $n . ' mensagem(ns)).' . $onde];
     }
 
@@ -345,7 +345,7 @@ class PluginCentraldecontatosConversa extends CommonDBTM
             'item'       => self::rotuloItem((string) $c['itemtype'], (int) $c['items_id']),
             'item_url'   => self::urlItem((string) $c['itemtype'], (int) $c['items_id']),
             'arquivada'  => (int) $c['is_arquivada'] === 1,
-            'nao_salvas' => self::itemVinculado($c) ? countElementsInTable(PluginCentraldecontatosMensagem::TABELA, ['conversas_id' => (int) $c['id'], 'id' => ['>', (int) ($c['salva_ate_id'] ?? 0)]]) : 0,
+            'pode_validar' => in_array((string) $c['itemtype'], ['Ticket', 'Change'], true) && (int) $c['items_id'] > 0,
         ];
     }
 }

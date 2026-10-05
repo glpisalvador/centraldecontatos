@@ -8,7 +8,7 @@
  * guardadas em tabelas do plugin, com mídias, status de entrega e acompanhamentos no item.
  */
 
-define('PLUGIN_CENTRALDECONTATOS_VERSION', '3.1.0');
+define('PLUGIN_CENTRALDECONTATOS_VERSION', '3.2.0');
 define('PLUGIN_CENTRALDECONTATOS_MIN_GLPI', '11.0.0');
 define('PLUGIN_CENTRALDECONTATOS_MAX_GLPI', '12.99.99');
 

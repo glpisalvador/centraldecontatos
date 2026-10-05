@@ -119,10 +119,35 @@ function plugin_centraldecontatos_install(): bool
         ) $opcoes");
     }
 
+    // ------------------------------------------------------------ WhatsApp: pedidos de validação enviados pelo chat
+    if (!$DB->tableExists('glpi_plugin_centraldecontatos_validacoes')) {
+        $DB->doQuery("CREATE TABLE `glpi_plugin_centraldecontatos_validacoes` (
+            `id` int unsigned NOT NULL AUTO_INCREMENT,
+            `conversas_id` int unsigned NOT NULL DEFAULT 0,
+            `mensagens_id` int unsigned NOT NULL DEFAULT 0,
+            `wa_id` varchar(80) NOT NULL DEFAULT '',
+            `itemtype` varchar(50) NOT NULL DEFAULT '',
+            `items_id` int unsigned NOT NULL DEFAULT 0,
+            `objeto_itemtype` varchar(50) NOT NULL DEFAULT '',
+            `objeto_id` int unsigned NOT NULL DEFAULT 0,
+            `users_id` int unsigned NOT NULL DEFAULT 0,
+            `users_id_envio` int unsigned NOT NULL DEFAULT 0,
+            `status` varchar(20) NOT NULL DEFAULT 'aguardando',
+            `comentario` text NULL,
+            `date_creation` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+            `date_resposta` timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `conversa_status` (`conversas_id`, `status`),
+            KEY `validacao` (`itemtype`, `items_id`),
+            KEY `wa_id` (`wa_id`)
+        ) $opcoes");
+    }
+
     // ------------------------------------------------------------ servidor WhatsApp
     require_once __DIR__ . '/inc/whatsapp.class.php';
     require_once __DIR__ . '/inc/conversa.class.php';
     require_once __DIR__ . '/inc/mensagem.class.php';
+    require_once __DIR__ . '/inc/validacao.class.php';
     PluginCentraldecontatosWhatsapp::token();
     if (PluginCentraldecontatosWhatsapp::prepararPastas() === null) {
         PluginCentraldecontatosWhatsapp::sincronizarApp();

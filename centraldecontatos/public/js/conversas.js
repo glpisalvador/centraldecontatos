@@ -125,10 +125,10 @@
 
     /**
      * Monta o chat dentro de "caixa". opcoes: conversas_id ou telefone (+ nome), itemtype, items_id,
-     * rascunho (texto inicial), aoLink (abre o wa.me), modoCaixa (mostra arquivar).
+     * rascunho (texto inicial), modoCaixa (mostra vincular e arquivar), aoMudar, aoAbrir.
      */
     var montar = function (caixa, opcoes) {
-        var estado = { conversa: null, ultimoId: 0, primeiroId: 0, citar: 0, upload: null, timer: null, ativo: true, enviando: false, gravador: null, ultimoDia: '' };
+        var estado = { conversa: null, ultimoId: 0, primeiroId: 0, citar: 0, timer: null, ativo: true, ocupado: false, gravador: null, relogio: null, limiteMb: 16, ultimoDia: '' };
         caixa.innerHTML = '<div class="' + P + 'chat"><div class="' + P + 'carregando"><i class="ti ti-loader-2"></i> Abrindo conversa...</div></div>';
         var chat = caixa.querySelector('.' + P + 'chat');
 
@@ -145,36 +145,36 @@
                 '<div class="' + P + 'quem"><strong data-nome></strong><small data-numero></small></div>' +
                 '<span class="' + P + 'servidor" data-servidor></span>' +
                 '<div class="' + P + 'topo-acoes">' +
-                '<button type="button" class="btn btn-sm btn-ghost-secondary ' + P + 'salvar" data-salvar title="Salvar a conversa no acompanhamento do item"><i class="ti ti-device-floppy"></i><span class="centraldecontatos-badge" data-nao-salvas hidden></span></button>' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-validar title="Enviar pedido de validação" hidden><i class="ti ti-checkup-list"></i></button>' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-salvar title="Salvar a conversa no acompanhamento do item"><i class="ti ti-device-floppy"></i></button>' +
                 '<button type="button" class="btn btn-sm btn-ghost-secondary" data-limpar title="Limpar conversa (antes, salva no acompanhamento do item)"><i class="ti ti-eraser"></i></button>' +
                 (opcoes.modoCaixa ? '<button type="button" class="btn btn-sm btn-ghost-secondary" data-vincular-abrir title="Vincular a um chamado, problema ou mudança"><i class="ti ti-link"></i></button>' +
                     '<button type="button" class="btn btn-sm btn-ghost-secondary" data-arquivar title="Arquivar"><i class="ti ti-archive"></i></button>' : '') +
-                (opcoes.aoLink ? '<button type="button" class="btn btn-sm btn-ghost-secondary" data-link title="Abrir no WhatsApp (wa.me)"><i class="ti ti-external-link"></i></button>' : '') +
-                (!opcoes.modoCaixa ? '<a class="btn btn-sm btn-ghost-secondary" data-caixa title="Abrir na caixa de conversas"><i class="ti ti-messages"></i></a>' : '') +
                 '</div></div>' +
                 '<div class="' + P + 'item" data-item hidden></div>' +
+                '<div class="' + P + 'validacoes" data-validacoes hidden></div>' +
                 '<form class="' + P + 'vincular" data-vincular hidden><select class="form-select form-select-sm" data-vincular-tipo><option value="Ticket">Chamado</option><option value="Problem">Problema</option><option value="Change">Mudança</option></select>' +
                 '<input type="number" min="1" class="form-control form-control-sm" placeholder="Número" data-vincular-id>' +
                 '<button type="submit" class="btn btn-sm centraldecontatos-btn-principal"><i class="ti ti-link"></i><span>Vincular</span></button>' +
                 '<button type="button" class="btn btn-sm btn-ghost-secondary" data-desvincular title="Remover vínculo"><i class="ti ti-unlink"></i></button></form>' +
                 '<div class="' + P + 'alerta" data-alerta hidden><i class="ti ti-plug-connected-x"></i><span>O servidor WhatsApp está desconectado: as mensagens não saem até ele voltar.</span></div>' +
                 '<div class="' + P + 'mensagens" data-mensagens><button type="button" class="btn btn-sm btn-ghost-secondary ' + P + 'antigas" data-antigas hidden><i class="ti ti-history"></i><span>Mensagens anteriores</span></button><div data-lista></div></div>' +
-                '<div class="' + P + 'citando" data-citando hidden><i class="ti ti-corner-up-left"></i><span data-citando-texto></span><button type="button" class="btn-close" data-citando-limpar aria-label="Cancelar resposta"></button></div>' +
-                '<div class="' + P + 'anexo" data-anexo hidden><i class="ti ti-paperclip"></i><span data-anexo-nome></span><span class="' + P + 'progresso"><span data-anexo-barra></span></span><button type="button" class="btn-close" data-anexo-limpar aria-label="Remover anexo"></button></div>' +
-                '<div class="' + P + 'compor">' +
-                '<input type="file" data-arquivo hidden>' +
-                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-anexar title="Anexar imagem, documento, áudio ou vídeo"><i class="ti ti-paperclip"></i></button>' +
-                (podeGravar ? '<button type="button" class="btn btn-sm btn-ghost-secondary" data-gravar title="Gravar áudio"><i class="ti ti-microphone"></i></button>' : '') +
+                '<div class="' + P + 'citando" data-citando hidden><span class="' + P + 'citando-corpo" data-citando-corpo></span><button type="button" class="btn-close" data-citando-limpar aria-label="Cancelar resposta"></button></div>' +
+                '<div class="' + P + 'anexo" data-anexo hidden><i class="ti ti-loader-2 ' + P + 'girando"></i><span data-anexo-nome></span><span class="' + P + 'progresso"><span data-anexo-barra></span></span></div>' +
+                '<div class="' + P + 'gravacao" data-gravacao hidden><span class="' + P + 'gravando-ponto"></span><span data-gravacao-tempo>0:00</span><span class="text-muted">Gravando áudio</span>' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-gravacao-cancelar title="Descartar"><i class="ti ti-trash"></i></button>' +
+                '<button type="button" class="btn btn-sm centraldecontatos-btn-principal" data-gravacao-enviar title="Parar e enviar"><i class="ti ti-send"></i></button></div>' +
+                '<div class="' + P + 'compor" data-compor>' +
+                '<input type="file" data-arquivo multiple hidden>' +
+                '<input type="file" data-arquivo-audio accept="audio/*" capture hidden>' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-anexar title="Anexar e enviar imagens, documentos, áudios ou vídeos (pode escolher vários, colar ou arrastar)"><i class="ti ti-paperclip"></i></button>' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-gravar title="' + (podeGravar ? 'Gravar e enviar áudio' : 'Enviar áudio (para gravar aqui, o GLPI precisa estar em HTTPS)') + '"><i class="ti ti-microphone"></i></button>' +
                 '<textarea class="form-control form-control-sm" rows="1" data-texto placeholder="Mensagem (Enter envia, Shift+Enter quebra a linha)"></textarea>' +
                 '<button type="button" class="btn btn-sm centraldecontatos-btn-principal" data-enviar title="Enviar"><i class="ti ti-send"></i></button>' +
                 '</div>';
             if (opcoes.rascunho) {
                 chat.querySelector('[data-texto]').value = opcoes.rascunho;
                 ajustarAltura();
-            }
-            var caixaLink = chat.querySelector('[data-caixa]');
-            if (caixaLink) {
-                caixaLink.href = PAGINA_CONVERSAS + '?conversa=' + encodeURIComponent(estado.conversa ? estado.conversa.id : '');
             }
         };
 
@@ -209,23 +209,64 @@
                 q('[data-alerta]').hidden = !!servidor.conectado;
             }
             var salvar = q('[data-salvar]');
-            var pend = q('[data-nao-salvas]');
-            salvar.disabled = !c.item;
-            salvar.title = c.item ? 'Salvar a conversa no acompanhamento de ' + c.item + (c.nao_salvas ? ' (' + c.nao_salvas + ' mensagem(ns) ainda não salva(s))' : ' (tudo já salvo)') : 'Vincule a conversa a um chamado, problema ou mudança para salvar';
-            pend.hidden = !c.item || !c.nao_salvas;
-            pend.textContent = c.nao_salvas > 99 ? '99+' : String(c.nao_salvas || '');
+            salvar.dataset.semItem = c.item ? '' : '1';
+            salvar.title = c.item ? 'Salvar a conversa inteira, com os anexos, no acompanhamento de ' + c.item : 'Vincule a conversa a um chamado, problema ou mudança para salvar';
             if (q('[data-limpar]').dataset.armado !== '1') {
-                q('[data-limpar]').title = c.item ? 'Limpar conversa: antes, salva no acompanhamento de ' + c.item : 'Limpar conversa (sem item vinculado: nada é salvo)';
+                q('[data-limpar]').title = c.item ? 'Limpar conversa: antes, salva a conversa inteira no acompanhamento de ' + c.item : 'Limpar conversa (sem item vinculado: nada é salvo)';
+            }
+            q('[data-validar]').hidden = !c.pode_validar;
+            if (!c.pode_validar) {
+                q('[data-validacoes]').hidden = true;
             }
             var arq = q('[data-arquivar]');
             if (arq) {
                 arq.title = c.arquivada ? 'Reabrir conversa' : 'Arquivar';
                 arq.innerHTML = '<i class="ti ' + (c.arquivada ? 'ti-archive-off' : 'ti-archive') + '"></i>';
             }
-            var caixaLink = q('[data-caixa]');
-            if (caixaLink) {
-                caixaLink.href = PAGINA_CONVERSAS + '?conversa=' + c.id;
+            travar(estado.ocupado);
+        };
+
+        /** Enquanto envia arquivos, salva ou limpa: nenhuma outra ação no chat */
+        var travar = function (sim) {
+            estado.ocupado = !!sim;
+            chat.classList.toggle(P + 'ocupado', estado.ocupado);
+            chat.querySelectorAll('[data-compor] button, [data-compor] textarea, .' + P + 'topo-acoes button').forEach(function (b) {
+                b.disabled = estado.ocupado || (b.hasAttribute('data-salvar') && b.dataset.semItem === '1');
+            });
+        };
+
+        /** Depois de salvar ou limpar: a página do próprio item recarrega para mostrar o acompanhamento novo */
+        var recarregarSeNoItem = function (c) {
+            if (!c || !c.item_url) {
+                return false;
             }
+            var alvo = new URL(c.item_url, window.location.href);
+            var aqui = new URL(window.location.href);
+            if (alvo.pathname === aqui.pathname && alvo.searchParams.get('id') === aqui.searchParams.get('id')) {
+                window.location.reload();
+                return true;
+            }
+            return false;
+        };
+
+        var ICONE_TIPO = { imagem: 'ti-photo', figurinha: 'ti-sticker', audio: 'ti-microphone', video: 'ti-video', documento: 'ti-file-text' };
+
+        /** Mensagem citada: autor, texto e miniatura da mídia */
+        var htmlCitada = function (c) {
+            if (!c) {
+                return '';
+            }
+            var mini = '';
+            if (c.url && (c.tipo === 'imagem' || c.tipo === 'figurinha')) {
+                mini = '<img src="' + esc(c.url) + '" alt="" loading="lazy">';
+            } else if (c.url && c.tipo === 'video') {
+                mini = '<video src="' + esc(c.url) + '#t=0.5" preload="metadata" muted></video>';
+            } else if (ICONE_TIPO[c.tipo] && c.tipo !== 'imagem' && c.tipo !== 'video') {
+                mini = '<i class="ti ' + ICONE_TIPO[c.tipo] + '"></i>';
+            }
+            return '<div class="' + P + 'citada' + (c.autor === 'Você' ? ' ' + P + 'citada-minha' : '') + '"' + (c.id ? ' data-ir="' + c.id + '" title="Ir para a mensagem"' : '') + '>' +
+                '<span class="' + P + 'citada-texto">' + (c.autor ? '<strong>' + esc(c.autor) + '</strong>' : '') + '<span>' + esc(c.texto || 'Mídia') + '</span></span>' +
+                (mini ? '<span class="' + P + 'citada-mini">' + mini + '</span>' : '') + '</div>';
         };
 
         var htmlMidia = function (m) {
@@ -264,9 +305,9 @@
 
         var htmlMensagem = function (m) {
             var autor = m.direcao === 'saida' ? (m.origem === 'celular' ? 'Celular' : (m.autor || '')) : '';
-            return '<div class="' + P + 'msg ' + P + m.direcao + '" data-id="' + m.id + '">' +
+            return '<div class="' + P + 'msg ' + P + m.direcao + '" data-id="' + m.id + '" data-tipo="' + esc(m.tipo) + '" data-autor="' + esc(m.direcao === 'saida' ? 'Você' : (estado.conversa ? estado.conversa.nome : '')) + '">' +
                 '<div class="' + P + 'balao">' +
-                (m.citada ? '<div class="' + P + 'citada">' + esc(m.citada) + '</div>' : '') +
+                htmlCitada(m.citada) +
                 htmlMidia(m) +
                 (m.texto ? '<div class="' + P + 'texto">' + formatar(m.texto) + '</div>' : '') +
                 '<div class="' + P + 'meta">' +
@@ -382,21 +423,20 @@
             }, 2500);
         };
 
-        // ---------------------------------------------------------------- anexos e áudio
+        // ---------------------------------------------------------------- envio (texto e mídias)
 
-        var limparAnexo = function () {
-            estado.upload = null;
-            q('[data-anexo]').hidden = true;
-            q('[data-arquivo]').value = '';
+        var limparCitacao = function () {
+            estado.citar = 0;
+            q('[data-citando]').hidden = true;
         };
 
-        var enviarArquivo = function (arquivo, nome) {
+        /** Sobe um arquivo em partes; devolve o upload_id */
+        var subirArquivo = function (arquivo, nome, rotulo) {
             var total = Math.max(1, Math.ceil(arquivo.size / PARTE));
             var id = Array.from(window.crypto.getRandomValues(new Uint8Array(12))).map(function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
             q('[data-anexo]').hidden = false;
-            q('[data-anexo-nome]').textContent = nome + ' (' + tamanhoLegivel(arquivo.size) + ')';
+            q('[data-anexo-nome]').textContent = rotulo + nome + ' (' + tamanhoLegivel(arquivo.size) + ')';
             q('[data-anexo-barra]').style.width = '0%';
-            estado.upload = { id: id, pronto: false, nome: nome };
             var parte = 0;
             var proxima = function () {
                 var pedaco = arquivo.slice(parte * PARTE, Math.min(arquivo.size, (parte + 1) * PARTE));
@@ -406,26 +446,114 @@
                     }
                     parte++;
                     q('[data-anexo-barra]').style.width = Math.round(parte * 100 / total) + '%';
-                    if (parte < total) {
-                        return proxima();
-                    }
-                    if (estado.upload && estado.upload.id === id) {
-                        estado.upload.pronto = true;
-                        estado.upload.tipo = r.tipo;
-                    }
-                    return r;
+                    return parte < total ? proxima() : id;
                 });
             };
-            return proxima().catch(function (e) {
-                aviso(e.message, true);
-                limparAnexo();
-                throw e;
+            return proxima();
+        };
+
+        var postarMensagem = function (texto, uploadId) {
+            return postar('enviar', Object.assign({ conversas_id: estado.conversa.id, texto: texto, citar: estado.citar || '', upload_id: uploadId || '' }, contexto())).then(function (r) {
+                if (!r.success) {
+                    throw new Error(r.mensagem || 'Mensagem não enviada.');
+                }
+                return r;
             });
         };
 
-        var gravar = function (botao) {
-            if (estado.gravador) {
-                estado.gravador.stop();
+        /**
+         * Envia as mídias assim que são escolhidas, uma de cada vez: sobe, envia e passa para a próxima.
+         * O texto digitado vai como legenda da primeira e a citação vale para a primeira.
+         */
+        var enviarArquivos = function (arquivos) {
+            arquivos = Array.from(arquivos || []).filter(function (a) { return a && a.size > 0; });
+            if (!arquivos.length || !estado.conversa || estado.ocupado) {
+                return Promise.resolve();
+            }
+            var limite = (estado.limiteMb || 16) * 1048576;
+            var grandes = arquivos.filter(function (a) { return a.size > limite; });
+            if (grandes.length) {
+                aviso('Acima do limite de ' + (estado.limiteMb || 16) + ' MB: ' + grandes.map(function (a) { return a.name; }).join(', '), true);
+                arquivos = arquivos.filter(function (a) { return a.size <= limite; });
+                if (!arquivos.length) {
+                    return Promise.resolve();
+                }
+            }
+            var campo = q('[data-texto]');
+            var legenda = campo.value.trim();
+            travar(true);
+            var falhas = [];
+            var i = 0;
+            var proximo = function () {
+                if (i >= arquivos.length) {
+                    return Promise.resolve();
+                }
+                var a = arquivos[i];
+                var nome = a.name || ('arquivo-' + Date.now());
+                var rotulo = arquivos.length > 1 ? (i + 1) + ' de ' + arquivos.length + ': ' : '';
+                var texto = i === 0 ? legenda : '';
+                i++;
+                return subirArquivo(a, nome, rotulo)
+                    .then(function (id) { return postarMensagem(texto, id); })
+                    .then(function () {
+                        if (texto) {
+                            campo.value = '';
+                            ajustarAltura();
+                        }
+                        limparCitacao();
+                        return consultar().then(rolarFim);
+                    })
+                    .catch(function (e) { falhas.push(nome + ': ' + e.message); })
+                    .then(proximo);
+            };
+            return proximo().finally(function () {
+                q('[data-anexo]').hidden = true;
+                q('[data-arquivo]').value = '';
+                q('[data-arquivo-audio]').value = '';
+                travar(false);
+                if (falhas.length) {
+                    aviso(falhas.join(' · '), true);
+                }
+                campo.focus();
+            });
+        };
+
+        var enviar = function () {
+            if (estado.ocupado || !estado.conversa) {
+                return;
+            }
+            var campo = q('[data-texto]');
+            var texto = campo.value.trim();
+            if (!texto) {
+                return;
+            }
+            travar(true);
+            postarMensagem(texto, '').then(function () {
+                campo.value = '';
+                ajustarAltura();
+                limparCitacao();
+                return consultar().then(rolarFim);
+            }).catch(function (e) {
+                aviso(e.message || 'Falha de comunicação.', true);
+            }).finally(function () {
+                travar(false);
+                campo.focus();
+            });
+        };
+
+        // ---------------------------------------------------------------- gravação de áudio
+
+        var pararRelogio = function () {
+            clearInterval(estado.relogio);
+            q('[data-gravacao]').hidden = true;
+            q('[data-compor]').hidden = false;
+        };
+
+        var gravar = function () {
+            if (!podeGravar) {
+                // Fora de HTTPS o navegador não libera o microfone: escolhe (ou grava pelo celular) um arquivo de áudio
+                aviso('Para gravar aqui, o GLPI precisa estar em HTTPS. Escolha um arquivo de áudio para enviar.', false);
+                q('[data-arquivo-audio]').click();
                 return;
             }
             navigator.mediaDevices.getUserMedia({ audio: true }).then(function (fluxo) {
@@ -435,63 +563,88 @@
                 rec.ondataavailable = function (e) { if (e.data.size) { partes.push(e.data); } };
                 rec.onstop = function () {
                     fluxo.getTracks().forEach(function (t) { t.stop(); });
+                    var descartar = rec.descartar;
                     estado.gravador = null;
-                    botao.classList.remove(P + 'gravando');
-                    botao.innerHTML = '<i class="ti ti-microphone"></i>';
+                    pararRelogio();
                     var blob = new Blob(partes, { type: 'audio/webm' });
-                    if (blob.size > 0) {
-                        enviarArquivo(blob, 'gravacao-' + Date.now() + '.webm').then(function () { enviar(); });
+                    if (!descartar && blob.size > 0) {
+                        enviarArquivos([new File([blob], 'gravacao-' + Date.now() + '.webm', { type: 'audio/webm' })]);
                     }
                 };
                 rec.start();
                 estado.gravador = rec;
-                botao.classList.add(P + 'gravando');
-                botao.innerHTML = '<i class="ti ti-player-stop-filled"></i>';
+                var inicio = Date.now();
+                q('[data-compor]').hidden = true;
+                q('[data-gravacao]').hidden = false;
+                q('[data-gravacao-tempo]').textContent = '0:00';
+                estado.relogio = setInterval(function () {
+                    var s = Math.floor((Date.now() - inicio) / 1000);
+                    q('[data-gravacao-tempo]').textContent = Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2);
+                }, 500);
             }).catch(function () {
-                aviso('Não foi possível usar o microfone.', true);
+                aviso('Não foi possível usar o microfone. Verifique a permissão do navegador.', true);
             });
         };
 
-        // ---------------------------------------------------------------- envio
+        var terminarGravacao = function (descartar) {
+            if (estado.gravador) {
+                estado.gravador.descartar = !!descartar;
+                estado.gravador.stop();
+            }
+        };
 
-        var enviar = function () {
-            if (estado.enviando || !estado.conversa) {
+        // ---------------------------------------------------------------- pedido de validação
+
+        var mostrarValidacoes = function () {
+            var box = q('[data-validacoes]');
+            if (!box.hidden) {
+                box.hidden = true;
                 return;
             }
-            var campo = q('[data-texto]');
-            var texto = campo.value.trim();
-            if (estado.upload && !estado.upload.pronto) {
-                aviso('Aguarde o arquivo terminar de subir.', true);
-                return;
-            }
-            if (!texto && !estado.upload) {
-                return;
-            }
-            estado.enviando = true;
-            var botao = q('[data-enviar]');
-            botao.disabled = true;
-            postar('enviar', Object.assign({ conversas_id: estado.conversa.id, texto: texto, citar: estado.citar || '', upload_id: estado.upload ? estado.upload.id : '' }, contexto())).then(function (r) {
-                estado.enviando = false;
-                botao.disabled = false;
+            box.hidden = false;
+            box.innerHTML = '<div class="' + P + 'carregando"><i class="ti ti-loader-2"></i> Buscando validações...</div>';
+            postar('validacoes', { conversas_id: estado.conversa.id }).then(function (r) {
                 if (!r.success) {
-                    aviso(r.mensagem, true);
+                    box.innerHTML = '<div class="' + P + 'validacoes-vazio">' + esc(r.mensagem) + '</div>';
+                    return;
                 }
-                campo.value = '';
-                ajustarAltura();
-                limparAnexo();
-                limparCitacao();
-                consultar().then(rolarFim);
-                campo.focus();
-            }).catch(function () {
-                estado.enviando = false;
-                botao.disabled = false;
-                aviso('Falha de comunicação.', true);
+                var v = r.validacoes || [];
+                box.innerHTML = '<div class="' + P + 'validacoes-titulo"><i class="ti ti-checkup-list"></i> Validações aguardando resposta em ' + esc(r.item) + '<button type="button" class="btn-close" data-validacoes-fechar aria-label="Fechar"></button></div>' +
+                    (!v.length ? '<div class="' + P + 'validacoes-vazio">Nenhuma validação aguardando resposta. Crie a validação no item e ela aparece aqui.</div>' :
+                        v.map(function (x) {
+                            return '<div class="' + P + 'validacao">' +
+                                '<div><strong>Aprovador: ' + esc(x.aprovadores || '—') + '</strong>' +
+                                '<small>Pedida por ' + esc(x.solicitante) + ' em ' + esc(x.quando) + (x.enviado ? ' · enviada por aqui em ' + esc(x.enviado) : '') + '</small>' +
+                                (x.comentario ? '<small>' + esc(x.comentario) + '</small>' : '') +
+                                (!x.confere ? '<small class="' + P + 'validacao-aviso"><i class="ti ti-alert-triangle"></i> Este número não é o celular ou telefone cadastrado de um aprovador.</small>' : '') +
+                                '</div>' +
+                                '<button type="button" class="btn btn-sm centraldecontatos-btn-principal" data-validacao-enviar="' + x.id + '"' + (x.confere ? '' : ' disabled') + '><i class="ti ti-send"></i><span>' + (x.enviado ? 'Enviar de novo' : 'Enviar') + '</span></button></div>';
+                        }).join(''));
             });
         };
 
-        var limparCitacao = function () {
-            estado.citar = 0;
-            q('[data-citando]').hidden = true;
+        // ---------------------------------------------------------------- citação
+
+        var citar = function (msg) {
+            estado.citar = parseInt(msg.dataset.id, 10);
+            var balao = msg.querySelector('.' + P + 'texto');
+            var tipo = msg.dataset.tipo || 'texto';
+            var mini = '';
+            var img = msg.querySelector('.' + P + 'imagem img');
+            var vid = msg.querySelector('video');
+            if (img) {
+                mini = '<img src="' + esc(img.getAttribute('src')) + '" alt="">';
+            } else if (vid) {
+                mini = '<video src="' + esc(vid.getAttribute('src')) + '#t=0.5" preload="metadata" muted></video>';
+            } else if (ICONE_TIPO[tipo]) {
+                mini = '<i class="ti ' + ICONE_TIPO[tipo] + '"></i>';
+            }
+            var doc = msg.querySelector('.' + P + 'documento strong');
+            var texto = balao ? balao.textContent.slice(0, 160) : (doc ? doc.textContent : ({ imagem: 'Imagem', figurinha: 'Figurinha', audio: 'Áudio', video: 'Vídeo' }[tipo] || 'Mídia'));
+            q('[data-citando-corpo]').innerHTML = '<i class="ti ti-corner-up-left"></i><span class="' + P + 'citada-texto"><strong>' + esc(msg.dataset.autor || '') + '</strong><span>' + esc(texto) + '</span></span>' +
+                (mini ? '<span class="' + P + 'citada-mini">' + mini + '</span>' : '');
+            q('[data-citando]').hidden = false;
+            q('[data-texto]').focus();
         };
 
         // ---------------------------------------------------------------- eventos
@@ -499,16 +652,28 @@
         var ligarEventos = function () {
             chat.addEventListener('click', function (e) {
                 var el;
+                if (estado.ocupado && !e.target.closest('a, audio, video')) {
+                    return;
+                }
                 if ((el = e.target.closest('[data-enviar]'))) {
                     enviar();
-                } else if ((el = e.target.closest('[data-anexar]'))) {
+                } else if (e.target.closest('[data-anexar]')) {
                     q('[data-arquivo]').click();
-                } else if ((el = e.target.closest('[data-gravar]'))) {
-                    gravar(el);
-                } else if (e.target.closest('[data-anexo-limpar]')) {
-                    limparAnexo();
+                } else if (e.target.closest('[data-gravar]')) {
+                    gravar();
+                } else if (e.target.closest('[data-gravacao-enviar]')) {
+                    terminarGravacao(false);
+                } else if (e.target.closest('[data-gravacao-cancelar]')) {
+                    terminarGravacao(true);
                 } else if (e.target.closest('[data-citando-limpar]')) {
                     limparCitacao();
+                } else if ((el = e.target.closest('[data-ir]'))) {
+                    var original = lista().querySelector('[data-id="' + el.dataset.ir + '"]');
+                    if (original) {
+                        original.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        original.classList.add(P + 'destaque');
+                        setTimeout(function () { original.classList.remove(P + 'destaque'); }, 1600);
+                    }
                 } else if (e.target.closest('[data-antigas]')) {
                     postar('antigas', { conversas_id: estado.conversa.id, antes_de: estado.primeiroId }).then(function (r) {
                         var msgs = r.mensagens || [];
@@ -516,12 +681,7 @@
                         q('[data-antigas]').hidden = msgs.length < 60;
                     });
                 } else if ((el = e.target.closest('[data-responder]'))) {
-                    var msg = el.closest('[data-id]');
-                    estado.citar = parseInt(msg.dataset.id, 10);
-                    var balao = msg.querySelector('.' + P + 'texto');
-                    q('[data-citando-texto]').textContent = balao ? balao.textContent.slice(0, 140) : 'Mídia';
-                    q('[data-citando]').hidden = false;
-                    q('[data-texto]').focus();
+                    citar(el.closest('[data-id]'));
                 } else if ((el = e.target.closest('[data-reagir]'))) {
                     var alvo = el.closest('[data-id]');
                     var aberto = alvo.querySelector('.' + P + 'emojis');
@@ -538,13 +698,33 @@
                         }
                         consultar();
                     });
-                } else if ((el = e.target.closest('[data-salvar]'))) {
+                } else if (e.target.closest('[data-validar]')) {
+                    mostrarValidacoes();
+                } else if (e.target.closest('[data-validacoes-fechar]')) {
+                    q('[data-validacoes]').hidden = true;
+                } else if ((el = e.target.closest('[data-validacao-enviar]'))) {
                     el.disabled = true;
+                    el.innerHTML = '<i class="ti ti-loader-2 ' + P + 'girando"></i><span>Enviando</span>';
+                    postar('pedir_validacao', { conversas_id: estado.conversa.id, validacao_id: el.dataset.validacaoEnviar }).then(function (r) {
+                        aviso(r.mensagem, !r.success);
+                        q('[data-validacoes]').hidden = true;
+                        if (r.success) {
+                            consultar().then(rolarFim);
+                        }
+                    });
+                } else if ((el = e.target.closest('[data-salvar]'))) {
+                    travar(true);
+                    el.innerHTML = '<i class="ti ti-loader-2 ' + P + 'girando"></i>';
                     postar('salvar_acompanhamento', { conversas_id: estado.conversa.id }).then(function (r) {
                         aviso(r.mensagem, !r.success);
                         if (r.conversa) {
                             estado.conversa = r.conversa;
                         }
+                        if (r.success && r.followup && recarregarSeNoItem(estado.conversa)) {
+                            return;
+                        }
+                        el.innerHTML = '<i class="ti ti-device-floppy"></i>';
+                        travar(false);
                         desenharTopo();
                     });
                 } else if ((el = e.target.closest('[data-limpar]'))) {
@@ -553,7 +733,7 @@
                         el.dataset.armado = '1';
                         el.classList.add(P + 'confirmar');
                         el.innerHTML = '<i class="ti ti-alert-triangle"></i><span>Limpar?</span>';
-                        el.title = estado.conversa.item ? 'Clique de novo: salva no acompanhamento de ' + estado.conversa.item + ' e apaga as mensagens do chat' : 'Clique de novo: apaga as mensagens do chat (sem item vinculado, nada é salvo)';
+                        el.title = estado.conversa.item ? 'Clique de novo: salva a conversa inteira no acompanhamento de ' + estado.conversa.item + ' e apaga as mensagens do chat' : 'Clique de novo: apaga as mensagens do chat (sem item vinculado, nada é salvo)';
                         setTimeout(function () {
                             if (el.dataset.armado === '1') {
                                 el.dataset.armado = '';
@@ -565,12 +745,15 @@
                     }
                     el.dataset.armado = '';
                     el.classList.remove(P + 'confirmar');
-                    el.innerHTML = '<i class="ti ti-loader-2"></i>';
-                    el.disabled = true;
+                    el.innerHTML = '<i class="ti ti-loader-2 ' + P + 'girando"></i>';
+                    travar(true);
                     postar('limpar', { conversas_id: estado.conversa.id }).then(function (r) {
-                        el.disabled = false;
-                        el.innerHTML = '<i class="ti ti-eraser"></i>';
                         aviso(r.mensagem, !r.success);
+                        if (r.success && r.conversa && r.conversa.item && recarregarSeNoItem(r.conversa)) {
+                            return;
+                        }
+                        el.innerHTML = '<i class="ti ti-eraser"></i>';
+                        travar(false);
                         if (!r.success) {
                             return;
                         }
@@ -587,10 +770,6 @@
                             opcoes.aoMudar();
                         }
                     });
-                } else if (e.target.closest('[data-link]')) {
-                    if (opcoes.aoLink) {
-                        opcoes.aoLink();
-                    }
                 } else if (e.target.closest('[data-arquivar]')) {
                     postar('arquivar', { conversas_id: estado.conversa.id, valor: estado.conversa.arquivada ? 0 : 1 }).then(function (r) {
                         aviso(r.mensagem, !r.success);
@@ -631,10 +810,29 @@
                     }
                 });
             });
-            q('[data-arquivo]').addEventListener('change', function () {
-                var arq = this.files && this.files[0];
-                if (arq) {
-                    enviarArquivo(arq, arq.name).catch(function () { /* aviso já mostrado */ });
+            // Escolheu, enviou: cada arquivo sobe e vai para o contato na hora
+            ['[data-arquivo]', '[data-arquivo-audio]'].forEach(function (sel) {
+                q(sel).addEventListener('change', function () {
+                    enviarArquivos(this.files);
+                });
+            });
+            // Arrastar arquivos para dentro do chat
+            chat.addEventListener('dragover', function (e) {
+                if (e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') >= 0) {
+                    e.preventDefault();
+                    chat.classList.add(P + 'soltar');
+                }
+            });
+            chat.addEventListener('dragleave', function (e) {
+                if (!chat.contains(e.relatedTarget)) {
+                    chat.classList.remove(P + 'soltar');
+                }
+            });
+            chat.addEventListener('drop', function (e) {
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                    e.preventDefault();
+                    chat.classList.remove(P + 'soltar');
+                    enviarArquivos(e.dataTransfer.files);
                 }
             });
             var campo = q('[data-texto]');
@@ -645,14 +843,19 @@
                 }
             });
             campo.addEventListener('input', ajustarAltura);
-            // Colar imagem da área de transferência
+            // Colar imagens ou arquivos da área de transferência
             campo.addEventListener('paste', function (e) {
                 var itens = (e.clipboardData && e.clipboardData.items) ? Array.from(e.clipboardData.items) : [];
-                var img = itens.find(function (i) { return i.type && i.type.indexOf('image/') === 0; });
-                if (img) {
+                var arquivos = itens.filter(function (i) { return i.kind === 'file'; }).map(function (i, n) {
+                    var f = i.getAsFile();
+                    if (f && (!f.name || f.name === 'image.png') && f.type.indexOf('image/') === 0) {
+                        f = new File([f], 'imagem-' + Date.now() + '-' + n + '.' + (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg'), { type: f.type });
+                    }
+                    return f;
+                }).filter(Boolean);
+                if (arquivos.length) {
                     e.preventDefault();
-                    var f = img.getAsFile();
-                    enviarArquivo(f, 'imagem-' + Date.now() + '.' + (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg')).catch(function () { /* aviso já mostrado */ });
+                    enviarArquivos(arquivos);
                 }
             });
         };
@@ -669,6 +872,7 @@
                 return;
             }
             estado.conversa = r.conversa;
+            estado.limiteMb = r.limite_mb || 16;
             desenharEsqueleto();
             ligarEventos();
             desenharTopo(r.servidor);
@@ -687,7 +891,9 @@
             fechar: function () {
                 estado.ativo = false;
                 clearTimeout(estado.timer);
+                clearInterval(estado.relogio);
                 if (estado.gravador) {
+                    estado.gravador.descartar = true;
                     try { estado.gravador.stop(); } catch (e) { /* ok */ }
                 }
             },

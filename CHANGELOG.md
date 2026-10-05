@@ -2,6 +2,20 @@
 
 O arquivo para download de cada versão está em [Releases](https://github.com/glpisalvador/centraldecontatos/releases).
 
+## 3.2.0 — 2026-10-04
+
+Validação pelo WhatsApp, citação com mídia, envio múltiplo e áudio.
+
+- **Salvar** e **Limpar** passam a gravar sempre a **conversa inteira**, com todos os anexos. Na página do item, ela recarrega para mostrar o acompanhamento novo.
+- **Pedido de validação pelo chat**, em chamados e mudanças:
+  - lista as validações aguardando resposta e envia o pedido ao aprovador;
+  - só envia se o número for o celular ou telefone cadastrado de um aprovador;
+  - a resposta `1` (aprovar) ou `2 motivo` (recusar) é gravada na validação nativa em nome do aprovador, e o contato recebe a confirmação.
+- **Responder citando** mostra o autor, o texto e a miniatura da foto ou vídeo, ou o ícone de áudio ou documento, e leva à mensagem original. No celular, a citação aparece com a mídia original.
+- **Mídias:** vários arquivos de uma vez, colar ou arrastar. Cada um é enviado ao terminar de subir, com barra de progresso e o chat travado até concluir.
+- **Gravar e enviar áudio** com tempo, descartar e enviar. Em HTTP, o botão abre a escolha de um arquivo de áudio, porque o navegador só libera o microfone em HTTPS.
+- Saíram do chat o botão do `wa.me` e o de abrir a caixa de conversas.
+
 ## 3.1.0 — 2026-10-04
 
 Salvar e limpar conversa.

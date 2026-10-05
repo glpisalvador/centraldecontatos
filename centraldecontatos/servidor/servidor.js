@@ -70,6 +70,47 @@ function guardarEnviada(id, conteudo) {
    if (!id || !conteudo) return;
    enviadas.set(id, conteudo);
    if (enviadas.size > LIMITE_ENVIADAS) enviadas.delete(enviadas.keys().next().value);
+   guardarCitavel(id, conteudo);
+}
+
+// Conteudo original das mensagens (enviadas e recebidas) para citar com a midia e a miniatura,
+// guardado em disco para sobreviver a reinicios do servidor
+const ARQ_CITAVEIS = path.join(path.dirname(PASTA_AUTH), 'run', 'citaveis.json');
+const LIMITE_CITAVEIS = 2000;
+const citaveis = new Map();
+let gravarCitaveisTimer = null;
+try {
+   const salvo = JSON.parse(fs.readFileSync(ARQ_CITAVEIS, 'utf8'));
+   for (const [id, conteudo] of salvo) citaveis.set(id, conteudo);
+} catch (e) { /* primeira execucao */ }
+
+function guardarCitavel(id, conteudo) {
+   if (!id || !conteudo) return;
+   let copia;
+   try {
+      // Uint8Array (miniatura, chave da midia) vira o mesmo formato do Buffer.toJSON
+      copia = JSON.parse(JSON.stringify(conteudo, (k, v) => (v instanceof Uint8Array && !Buffer.isBuffer(v)) ? { type: 'Buffer', data: Array.from(v) } : v));
+   } catch (e) { return; }
+   citaveis.delete(id);
+   citaveis.set(id, copia);
+   while (citaveis.size > LIMITE_CITAVEIS) citaveis.delete(citaveis.keys().next().value);
+   if (gravarCitaveisTimer) return;
+   gravarCitaveisTimer = setTimeout(() => {
+      gravarCitaveisTimer = null;
+      try { fs.writeFileSync(ARQ_CITAVEIS, JSON.stringify([...citaveis])); } catch (e) { /* sem disco: so na memoria */ }
+   }, 15000);
+}
+
+/** Volta os Buffers gravados como JSON para Buffer (miniaturas e chaves da midia) */
+function reviverBuffers(valor) {
+   if (Array.isArray(valor)) return valor.map(reviverBuffers);
+   if (valor && typeof valor === 'object') {
+      if (valor.type === 'Buffer' && Array.isArray(valor.data)) return Buffer.from(valor.data);
+      const saida = {};
+      for (const k of Object.keys(valor)) saida[k] = reviverBuffers(valor[k]);
+      return saida;
+   }
+   return valor;
 }
 
 async function enviarGuardando(destino, conteudo, opcoes) {
@@ -483,9 +524,11 @@ function webmParaOgg(buf) {
 function mensagemCitada(destino, citar) {
    if (!citar || !citar.wa_id) return null;
    const deMim = !!citar.de_mim;
+   const original = citaveis.get(String(citar.wa_id));
    return {
       key: { remoteJid: destino, fromMe: deMim, id: String(citar.wa_id), participant: deMim ? undefined : destino },
-      message: { conversation: String(citar.texto || '') }
+      // Com o conteudo original o celular mostra a citacao com a foto, o video, o audio ou o documento
+      message: original ? reviverBuffers(original) : { conversation: String(citar.texto || '') }
    };
 }
 
@@ -615,6 +658,7 @@ async function tratarMensagem(mensagem) {
 
    const conteudo = normalizeMessageContent(mensagem.message) || {};
    if (conteudo.protocolMessage || conteudo.senderKeyDistributionMessage && Object.keys(conteudo).length === 1) return;
+   if (!conteudo.reactionMessage) guardarCitavel(waId, mensagem.message);
 
    let telefone = await telefoneDaMensagem(mensagem);
    if (telefone === '') telefone = numeroDoJid(jid);
