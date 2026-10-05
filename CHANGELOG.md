@@ -2,6 +2,16 @@
 
 O arquivo para download de cada versão está em [Releases](https://github.com/glpisalvador/centraldecontatos/releases).
 
+## 3.1.0 — 2026-10-04
+
+Salvar e limpar conversa.
+
+- Botão **Salvar no acompanhamento**: grava a conversa no item vinculado como um acompanhamento formatado como o WhatsApp. Ele traz:
+  - o cabeçalho com o contato, o telefone e o período;
+  - balões por dia, citações, reações e status;
+  - as mídias como documentos do item.
+- Botão **Limpar conversa**, com confirmação no próprio botão. Antes de apagar, salva no item vinculado o que ainda não estava salvo; depois apaga as mensagens e mídias do chat e mantém a conversa e o vínculo.
+
 ## 3.0.0 — 2026-10-04
 
 Servidor WhatsApp próprio e conversas em tempo real dentro do GLPI.

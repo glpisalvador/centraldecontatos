@@ -145,6 +145,8 @@
                 '<div class="' + P + 'quem"><strong data-nome></strong><small data-numero></small></div>' +
                 '<span class="' + P + 'servidor" data-servidor></span>' +
                 '<div class="' + P + 'topo-acoes">' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary ' + P + 'salvar" data-salvar title="Salvar a conversa no acompanhamento do item"><i class="ti ti-device-floppy"></i><span class="centraldecontatos-badge" data-nao-salvas hidden></span></button>' +
+                '<button type="button" class="btn btn-sm btn-ghost-secondary" data-limpar title="Limpar conversa (antes, salva no acompanhamento do item)"><i class="ti ti-eraser"></i></button>' +
                 (opcoes.modoCaixa ? '<button type="button" class="btn btn-sm btn-ghost-secondary" data-vincular-abrir title="Vincular a um chamado, problema ou mudança"><i class="ti ti-link"></i></button>' +
                     '<button type="button" class="btn btn-sm btn-ghost-secondary" data-arquivar title="Arquivar"><i class="ti ti-archive"></i></button>' : '') +
                 (opcoes.aoLink ? '<button type="button" class="btn btn-sm btn-ghost-secondary" data-link title="Abrir no WhatsApp (wa.me)"><i class="ti ti-external-link"></i></button>' : '') +
@@ -205,6 +207,15 @@
                 s.className = P + 'servidor ' + (servidor.conectado ? P + 'on' : P + 'off');
                 s.title = servidor.conectado ? 'Servidor WhatsApp conectado' : 'Servidor WhatsApp desconectado';
                 q('[data-alerta]').hidden = !!servidor.conectado;
+            }
+            var salvar = q('[data-salvar]');
+            var pend = q('[data-nao-salvas]');
+            salvar.disabled = !c.item;
+            salvar.title = c.item ? 'Salvar a conversa no acompanhamento de ' + c.item + (c.nao_salvas ? ' (' + c.nao_salvas + ' mensagem(ns) ainda não salva(s))' : ' (tudo já salvo)') : 'Vincule a conversa a um chamado, problema ou mudança para salvar';
+            pend.hidden = !c.item || !c.nao_salvas;
+            pend.textContent = c.nao_salvas > 99 ? '99+' : String(c.nao_salvas || '');
+            if (q('[data-limpar]').dataset.armado !== '1') {
+                q('[data-limpar]').title = c.item ? 'Limpar conversa: antes, salva no acompanhamento de ' + c.item : 'Limpar conversa (sem item vinculado: nada é salvo)';
             }
             var arq = q('[data-arquivar]');
             if (arq) {
@@ -526,6 +537,55 @@
                             aviso(r.mensagem, true);
                         }
                         consultar();
+                    });
+                } else if ((el = e.target.closest('[data-salvar]'))) {
+                    el.disabled = true;
+                    postar('salvar_acompanhamento', { conversas_id: estado.conversa.id }).then(function (r) {
+                        aviso(r.mensagem, !r.success);
+                        if (r.conversa) {
+                            estado.conversa = r.conversa;
+                        }
+                        desenharTopo();
+                    });
+                } else if ((el = e.target.closest('[data-limpar]'))) {
+                    // Confirmação dentro do próprio botão
+                    if (el.dataset.armado !== '1') {
+                        el.dataset.armado = '1';
+                        el.classList.add(P + 'confirmar');
+                        el.innerHTML = '<i class="ti ti-alert-triangle"></i><span>Limpar?</span>';
+                        el.title = estado.conversa.item ? 'Clique de novo: salva no acompanhamento de ' + estado.conversa.item + ' e apaga as mensagens do chat' : 'Clique de novo: apaga as mensagens do chat (sem item vinculado, nada é salvo)';
+                        setTimeout(function () {
+                            if (el.dataset.armado === '1') {
+                                el.dataset.armado = '';
+                                el.classList.remove(P + 'confirmar');
+                                el.innerHTML = '<i class="ti ti-eraser"></i>';
+                            }
+                        }, 4000);
+                        return;
+                    }
+                    el.dataset.armado = '';
+                    el.classList.remove(P + 'confirmar');
+                    el.innerHTML = '<i class="ti ti-loader-2"></i>';
+                    el.disabled = true;
+                    postar('limpar', { conversas_id: estado.conversa.id }).then(function (r) {
+                        el.disabled = false;
+                        el.innerHTML = '<i class="ti ti-eraser"></i>';
+                        aviso(r.mensagem, !r.success);
+                        if (!r.success) {
+                            return;
+                        }
+                        lista().innerHTML = '';
+                        estado.ultimoId = 0;
+                        estado.primeiroId = 0;
+                        estado.ultimoDia = '';
+                        q('[data-antigas]').hidden = true;
+                        if (r.conversa) {
+                            estado.conversa = r.conversa;
+                            desenharTopo();
+                        }
+                        if (opcoes.aoMudar) {
+                            opcoes.aoMudar();
+                        }
                     });
                 } else if (e.target.closest('[data-link]')) {
                     if (opcoes.aoLink) {

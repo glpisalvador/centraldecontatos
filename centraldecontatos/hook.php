@@ -78,6 +78,11 @@ function plugin_centraldecontatos_install(): bool
         ) $opcoes");
     }
 
+    // Última mensagem já gravada como acompanhamento no item (versões 3.0.x anteriores não tinham)
+    if (count(iterator_to_array($DB->doQuery("SHOW COLUMNS FROM `glpi_plugin_centraldecontatos_conversas` LIKE 'salva_ate_id'"))) === 0) {
+        $DB->doQuery("ALTER TABLE `glpi_plugin_centraldecontatos_conversas` ADD COLUMN `salva_ate_id` int unsigned NOT NULL DEFAULT 0 AFTER `nao_lidas`");
+    }
+
     // ------------------------------------------------------------ WhatsApp: mensagens
     if (!$DB->tableExists('glpi_plugin_centraldecontatos_mensagens')) {
         $DB->doQuery("CREATE TABLE `glpi_plugin_centraldecontatos_mensagens` (

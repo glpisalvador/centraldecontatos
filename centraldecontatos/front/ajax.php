@@ -356,6 +356,18 @@ try {
             $V::vincular((int) $c['id'], $tipo, $id);
             $responder(['success' => true, 'mensagem' => $tipo === '' ? 'Vínculo removido.' : 'Conversa vinculada a ' . $V::rotuloItem($tipo, $id) . '.', 'conversa' => $V::paraTela($V::obter((int) $c['id']))]);
 
+        case 'salvar_acompanhamento':
+            $c = $conversaDoPost();
+            @set_time_limit(180);
+            $r = $V::salvarNoItem((int) $c['id']);
+            $responder(['success' => $r['ok'], 'mensagem' => $r['mensagem'], 'followup' => $r['followup'], 'conversa' => $V::paraTela($V::obter((int) $c['id']))]);
+
+        case 'limpar':
+            $c = $conversaDoPost();
+            @set_time_limit(180);
+            $r = $V::limpar((int) $c['id']);
+            $responder(['success' => $r['ok'], 'mensagem' => $r['mensagem'], 'conversa' => $V::paraTela($V::obter((int) $c['id']))]);
+
         case 'arquivar':
             $c = $conversaDoPost();
             $V::arquivar((int) $c['id'], !empty($_POST['valor']));
