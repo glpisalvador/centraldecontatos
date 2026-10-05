@@ -715,3 +715,876 @@ input.centraldecontatos-check:indeterminate::after {
     width: 0.5em;
     border-top: 2px solid #fff;
 }
+
+/* ------------------------------------------------------------ WhatsApp: selos e botão flutuante */
+.centraldecontatos-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: rgba(25, 135, 84, 0.9);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.centraldecontatos-acao {
+    position: relative;
+}
+
+.centraldecontatos-acao .centraldecontatos-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+}
+
+.centraldecontatos-wa-flutuante {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 1040;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid rgba(25, 135, 84, 0.35);
+    border-radius: 22px;
+    background: var(--tblr-bg-surface, #fff);
+    color: #198754;
+    font-size: 18px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.centraldecontatos-wa-flutuante:hover {
+    background: rgba(25, 135, 84, 0.08);
+    color: #198754;
+}
+
+.centraldecontatos-wa-flutuante[hidden] {
+    display: none;
+}
+
+/* ------------------------------------------------------------ WhatsApp: chat */
+.centraldecontatos-wa-chat {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 460px;
+    font-size: 13px;
+    color: var(--tblr-body-color, #333);
+}
+
+.centraldecontatos-wa-modal .modal-body {
+    height: min(72vh, 680px);
+}
+
+.centraldecontatos-wa-carregando {
+    padding: 30px;
+    text-align: center;
+    color: var(--tblr-secondary, #6c757d);
+    font-size: 12px;
+}
+
+.centraldecontatos-wa-falha {
+    color: #b02a37;
+}
+
+.centraldecontatos-wa-topo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--tblr-border-color, #dee2e6);
+    background: var(--tblr-bg-surface-secondary, #f8f9fa);
+}
+
+.centraldecontatos-wa-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.centraldecontatos-wa-quem {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.centraldecontatos-wa-quem strong {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.centraldecontatos-wa-quem small {
+    font-size: 11px;
+    color: var(--tblr-secondary, #6c757d);
+}
+
+.centraldecontatos-wa-servidor {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #adb5bd;
+    flex: 0 0 9px;
+}
+
+.centraldecontatos-wa-servidor.centraldecontatos-wa-on {
+    background: #198754;
+}
+
+.centraldecontatos-wa-servidor.centraldecontatos-wa-off {
+    background: #dc3545;
+}
+
+.centraldecontatos-wa-topo-acoes {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.centraldecontatos-wa-item {
+    padding: 4px 12px;
+    font-size: 11px;
+    background: rgba(13, 110, 253, 0.05);
+    border-bottom: 1px solid var(--tblr-border-color, #e0e0e0);
+    color: var(--tblr-secondary, #6c757d);
+}
+
+.centraldecontatos-wa-vincular {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--tblr-border-color, #e0e0e0);
+}
+
+.centraldecontatos-wa-vincular[hidden],
+.centraldecontatos-wa-alerta[hidden],
+.centraldecontatos-wa-citando[hidden],
+.centraldecontatos-wa-anexo[hidden],
+.centraldecontatos-wa-item[hidden] {
+    display: none;
+}
+
+.centraldecontatos-wa-vincular select {
+    max-width: 130px;
+}
+
+.centraldecontatos-wa-vincular input {
+    max-width: 120px;
+}
+
+.centraldecontatos-wa-alerta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 12px;
+    background: rgba(220, 53, 69, 0.07);
+    color: #842029;
+    border-bottom: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.centraldecontatos-wa-mensagens {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 14px;
+    background: var(--tblr-body-bg, #f5f6f8);
+}
+
+.centraldecontatos-wa-antigas {
+    display: flex;
+    margin: 0 auto 8px;
+    gap: 4px;
+}
+
+.centraldecontatos-wa-antigas[hidden] {
+    display: none;
+}
+
+.centraldecontatos-wa-dia {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.centraldecontatos-wa-dia span {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: var(--tblr-bg-surface, #fff);
+    border: 1px solid var(--tblr-border-color, #e0e0e0);
+    font-size: 10px;
+    color: var(--tblr-secondary, #6c757d);
+}
+
+.centraldecontatos-wa-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 3px 0;
+}
+
+.centraldecontatos-wa-msg.centraldecontatos-wa-saida {
+    flex-direction: row-reverse;
+}
+
+.centraldecontatos-wa-balao {
+    position: relative;
+    max-width: min(78%, 520px);
+    padding: 6px 9px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--tblr-border-color, #e0e0e0);
+    background: var(--tblr-bg-surface, #fff);
+    word-wrap: break-word;
+}
+
+.centraldecontatos-wa-saida .centraldecontatos-wa-balao {
+    background: rgba(25, 135, 84, 0.08);
+    border-color: rgba(25, 135, 84, 0.2);
+}
+
+.centraldecontatos-wa-citada {
+    margin-bottom: 4px;
+    padding: 3px 7px;
+    border-left: 3px solid rgba(25, 135, 84, 0.45);
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 3px;
+    font-size: 11px;
+    color: var(--tblr-secondary, #6c757d);
+    white-space: pre-wrap;
+}
+
+.centraldecontatos-wa-texto {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.centraldecontatos-wa-texto a {
+    word-break: break-all;
+}
+
+.centraldecontatos-wa-meta {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--tblr-secondary, #8b95a5);
+}
+
+.centraldecontatos-wa-autor {
+    font-weight: 600;
+}
+
+.centraldecontatos-wa-tick {
+    font-size: 13px;
+}
+
+.centraldecontatos-wa-lida {
+    color: #0d6efd;
+}
+
+.centraldecontatos-wa-erro {
+    color: #dc3545;
+}
+
+.centraldecontatos-wa-acomp {
+    font-size: 11px;
+}
+
+.centraldecontatos-wa-reacoes {
+    position: absolute;
+    bottom: -10px;
+    right: 6px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--tblr-bg-surface, #fff);
+    border: 1px solid var(--tblr-border-color, #e0e0e0);
+    font-size: 12px;
+}
+
+.centraldecontatos-wa-reacoes[hidden] {
+    display: none;
+}
+
+.centraldecontatos-wa-msg-acoes {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.centraldecontatos-wa-msg:hover .centraldecontatos-wa-msg-acoes,
+.centraldecontatos-wa-msg:focus-within .centraldecontatos-wa-msg-acoes {
+    opacity: 1;
+}
+
+.centraldecontatos-wa-msg-acoes button {
+    border: 0;
+    background: transparent;
+    color: var(--tblr-secondary, #6c757d);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.centraldecontatos-wa-msg-acoes button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.centraldecontatos-wa-emojis {
+    display: flex;
+    gap: 2px;
+    margin-top: 4px;
+    padding: 3px;
+    border-radius: 14px;
+    background: var(--tblr-bg-surface, #fff);
+    border: 1px solid var(--tblr-border-color, #e0e0e0);
+}
+
+.centraldecontatos-wa-emojis button {
+    border: 0;
+    background: transparent;
+    font-size: 16px;
+    padding: 0 3px;
+    cursor: pointer;
+}
+
+.centraldecontatos-wa-imagem img {
+    display: block;
+    max-width: 100%;
+    max-height: 280px;
+    border-radius: 6px;
+    margin-bottom: 3px;
+}
+
+.centraldecontatos-wa-figurinha img {
+    max-width: 140px;
+}
+
+.centraldecontatos-wa-balao audio {
+    width: 260px;
+    max-width: 100%;
+    height: 34px;
+}
+
+.centraldecontatos-wa-balao video {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 6px;
+}
+
+.centraldecontatos-wa-documento {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.03);
+    color: inherit;
+    text-decoration: none;
+    margin-bottom: 3px;
+}
+
+.centraldecontatos-wa-documento span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.centraldecontatos-wa-documento strong {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+
+.centraldecontatos-wa-documento small {
+    font-size: 10px;
+    color: var(--tblr-secondary, #6c757d);
+}
+
+.centraldecontatos-wa-arquivo-ausente {
+    font-size: 11px;
+    color: var(--tblr-secondary, #999);
+}
+
+.centraldecontatos-wa-citando,
+.centraldecontatos-wa-anexo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    font-size: 12px;
+    border-top: 1px solid var(--tblr-border-color, #e0e0e0);
+    background: var(--tblr-bg-surface-secondary, #f8f9fa);
+}
+
+.centraldecontatos-wa-citando span,
+.centraldecontatos-wa-anexo span[data-anexo-nome] {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.centraldecontatos-wa-progresso {
+    width: 90px;
+    height: 5px;
+    border-radius: 3px;
+    background: #e9ecef;
+    overflow: hidden;
+}
+
+.centraldecontatos-wa-progresso span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #198754;
+    transition: width 0.2s ease;
+}
+
+.centraldecontatos-wa-compor {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--tblr-border-color, #dee2e6);
+    background: var(--tblr-bg-surface, #fff);
+}
+
+.centraldecontatos-wa-compor textarea {
+    flex: 1;
+    resize: none;
+    min-height: 32px;
+    max-height: 140px;
+    font-size: 13px;
+}
+
+.centraldecontatos-wa-gravando {
+    color: #dc3545 !important;
+}
+
+/* ------------------------------------------------------------ WhatsApp: caixa de conversas */
+.centraldecontatos-wa-caixa {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) 1fr;
+    height: calc(100vh - 170px);
+    min-height: 520px;
+    border: 1px solid var(--tblr-border-color, #dee2e6);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--tblr-bg-surface, #fff);
+}
+
+.centraldecontatos-wa-lateral {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--tblr-border-color, #dee2e6);
+    min-height: 0;
+}
+
+.centraldecontatos-wa-lateral-topo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--tblr-border-color, #dee2e6);
+    background: var(--tblr-bg-surface-secondary, #f8f9fa);
+}
+
+.centraldecontatos-wa-lateral-topo h5 {
+    flex: 1;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.centraldecontatos-wa-busca {
+    padding: 8px 10px 4px;
+}
+
+.centraldecontatos-wa-filtros {
+    padding: 4px 10px 8px;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.centraldecontatos-wa-filtros .nav-link {
+    padding: 2px 9px;
+    font-size: 11px;
+    border-radius: 10px;
+}
+
+.centraldecontatos-wa-filtros .nav-link.active {
+    background: #ffc107;
+    color: #333;
+}
+
+.centraldecontatos-wa-filtros .nav-link:not(.active):hover {
+    background: #fff3cd;
+}
+
+.centraldecontatos-wa-lista {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--tblr-border-color, #f0f0f0);
+}
+
+.centraldecontatos-wa-conversa {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--tblr-border-color, #f0f0f0);
+    background: transparent;
+    text-align: left;
+    color: inherit;
+}
+
+.centraldecontatos-wa-conversa:hover {
+    background: var(--tblr-bg-surface-secondary, #f8f9fa);
+}
+
+.centraldecontatos-wa-conversa.centraldecontatos-wa-ativa {
+    background: #e8f4fc;
+}
+
+.centraldecontatos-wa-conversa-corpo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.centraldecontatos-wa-conversa-linha {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.centraldecontatos-wa-conversa-linha strong {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.centraldecontatos-wa-conversa-linha small {
+    font-size: 10px;
+    color: var(--tblr-secondary, #999);
+    white-space: nowrap;
+}
+
+.centraldecontatos-wa-previa {
+    font-size: 12px;
+    color: var(--tblr-secondary, #6c757d);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.centraldecontatos-wa-naolida .centraldecontatos-wa-previa {
+    color: var(--tblr-body-color, #333);
+    font-weight: 600;
+}
+
+.centraldecontatos-wa-conversa-item {
+    font-size: 10px;
+    color: #0a58ca;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.centraldecontatos-wa-lateral form.centraldecontatos-wa-nova {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--tblr-border-color, #dee2e6);
+}
+
+.centraldecontatos-wa-painel {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.centraldecontatos-wa-painel > .centraldecontatos-wa-chat {
+    flex: 1;
+    min-height: 0;
+}
+
+.centraldecontatos-wa-vazio {
+    margin: auto;
+    text-align: center;
+    color: var(--tblr-secondary, #6c757d);
+    padding: 30px;
+}
+
+.centraldecontatos-wa-vazio .ti-messages {
+    font-size: 40px;
+    color: #adb5bd;
+}
+
+.centraldecontatos-wa-vazio small {
+    display: block;
+    font-size: 11px;
+    margin-top: 6px;
+}
+
+/* Lista de conversas na aba "Contatos" */
+.centraldecontatos-lista-conversas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.centraldecontatos-conversa-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--tblr-border-color, #f0f0f0);
+    background: transparent;
+    text-align: left;
+    color: inherit;
+}
+
+.centraldecontatos-conversa-item:hover {
+    background: var(--tblr-bg-surface-secondary, #f8f9fa);
+}
+
+.centraldecontatos-conversa-nome {
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.centraldecontatos-conversa-item small,
+.centraldecontatos-conversa-previa {
+    font-size: 11px;
+    color: var(--tblr-secondary, #6c757d);
+}
+
+/* ------------------------------------------------------------ WhatsApp: tela do servidor */
+.centraldecontatos-wa-cab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.centraldecontatos-wa-selo-ok {
+    background: rgba(25, 135, 84, 0.08) !important;
+    color: #198754 !important;
+    border-color: rgba(25, 135, 84, 0.3) !important;
+}
+
+.centraldecontatos-wa-selo-aviso {
+    background: rgba(255, 193, 7, 0.12) !important;
+    color: #664d03 !important;
+    border-color: rgba(255, 193, 7, 0.35) !important;
+}
+
+.centraldecontatos-wa-selo-neutro {
+    background: rgba(108, 117, 125, 0.1) !important;
+    color: #41464b !important;
+}
+
+.centraldecontatos-wa-dados {
+    width: 100%;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.centraldecontatos-wa-dados th {
+    width: 150px;
+    padding: 4px 8px 4px 0;
+    color: var(--tblr-secondary, #6c757d);
+    font-weight: 600;
+}
+
+.centraldecontatos-wa-dados td {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--tblr-border-color, #f0f0f0);
+}
+
+.centraldecontatos-wa-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.centraldecontatos-wa-acoes .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.centraldecontatos-wa-retorno {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--tblr-secondary, #6c757d);
+}
+
+.centraldecontatos-wa-qr {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.centraldecontatos-wa-qr img {
+    width: 240px;
+    height: 240px;
+    border: 1px solid var(--tblr-border-color, #dee2e6);
+    border-radius: 6px;
+    background: #fff;
+    padding: 6px;
+}
+
+.centraldecontatos-wa-qr ol {
+    font-size: 12px;
+    padding-left: 18px;
+    margin: 0;
+}
+
+.centraldecontatos-wa-etapas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.centraldecontatos-wa-etapa {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 9px 15px;
+    border-bottom: 1px solid var(--tblr-border-color, #f0f0f0);
+}
+
+.centraldecontatos-wa-etapa > i {
+    font-size: 17px;
+    margin-top: 1px;
+}
+
+.centraldecontatos-wa-etapa > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.centraldecontatos-wa-etapa strong {
+    font-size: 13px;
+}
+
+.centraldecontatos-wa-etapa small {
+    font-size: 11px;
+    color: var(--tblr-secondary, #6c757d);
+    word-break: break-word;
+}
+
+.centraldecontatos-wa-etapa pre {
+    max-height: 180px;
+    overflow: auto;
+    font-size: 11px;
+    margin: 4px 0 0;
+    padding: 6px;
+    background: var(--tblr-bg-surface-secondary, #f8f9fa);
+    border-radius: 4px;
+}
+
+.centraldecontatos-wa-etapa-ok > i { color: #198754; }
+.centraldecontatos-wa-etapa-erro > i { color: #dc3545; }
+.centraldecontatos-wa-etapa-pendente > i { color: #adb5bd; }
+.centraldecontatos-wa-etapa-andamento > i { color: #0dcaf0; }
+
+.centraldecontatos-wa-etapa-acoes {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.centraldecontatos-wa-etapa-acoes .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.centraldecontatos-wa-log {
+    max-height: 340px;
+    overflow: auto;
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 11px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.centraldecontatos-wa-seguir {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 11px;
+    color: var(--tblr-secondary, #6c757d);
+    margin: 0;
+}
+
+@media (max-width: 860px) {
+    .centraldecontatos-wa-caixa {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    .centraldecontatos-wa-painel {
+        min-height: 520px;
+    }
+}
+/* Conexão do aparelho (aba WhatsApp da configuração) */
+.centraldecontatos-wa-conexao {
+    margin-bottom: 12px !important;
+}
+
+.centraldecontatos-card > .card-body.centraldecontatos-wa-conexao-corpo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.centraldecontatos-wa-conexao-corpo .centraldecontatos-explicacao {
+    flex: 1 1 420px;
+    margin: 0;
+}

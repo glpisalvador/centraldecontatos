@@ -192,7 +192,21 @@ class PluginCentraldecontatosContato extends CommonDBTM
         $e = [$C, 'e'];
         $contatos = self::contatos($item);
         $vars = self::variaveis($item);
+        // Servidor WhatsApp próprio: o ícone abre o chat no GLPI; mostra as não lidas de cada número
+        $servidor = $C::ligado('wa_ativo');
+        $naoLidas = [];
+        if ($servidor) {
+            foreach ($contatos as $c) {
+                foreach ($c['telefones'] as $t) {
+                    $conv = PluginCentraldecontatosConversa::porTelefone($C::chaveTelefone((string) $t['numero']));
+                    if ($conv && (int) $conv['nao_lidas'] > 0) {
+                        $naoLidas[$t['whatsapp']] = (int) $conv['nao_lidas'];
+                    }
+                }
+            }
+        }
         $dados = [
+            'servidor_whatsapp' => $servidor,
             'ajax'       => $C::url('ajax.php'),
             'itemtype'   => get_class($item),
             'items_id'   => (int) $item->getID(),
@@ -220,7 +234,8 @@ class PluginCentraldecontatosContato extends CommonDBTM
                     $h .= '<div class="centraldecontatos-canal"><i class="ti ti-phone"></i><span class="centraldecontatos-valor" title="' . $e($t['rotulo']) . '">' . $e($t['exibicao']) . '</span><small>' . $e($t['rotulo']) . '</small>'
                         . '<span class="centraldecontatos-acoes">'
                         . '<a class="centraldecontatos-acao" href="tel:' . $e($t['tel']) . '" data-centraldecontatos-ligar="' . $i . ':' . $j . '" title="Ligar"><i class="ti ti-phone-call"></i></a>'
-                        . '<a class="centraldecontatos-acao" href="#" data-centraldecontatos-whatsapp="' . $i . ':' . $j . '" title="WhatsApp"><i class="ti ti-brand-whatsapp"></i></a>'
+                        . '<a class="centraldecontatos-acao" href="#" data-centraldecontatos-whatsapp="' . $i . ':' . $j . '" title="' . ($servidor ? 'Conversar pelo WhatsApp' : 'WhatsApp') . '"><i class="ti ti-brand-whatsapp"></i>'
+                        . (isset($naoLidas[$t['whatsapp']]) ? '<span class="centraldecontatos-badge" title="Mensagens não lidas">' . $naoLidas[$t['whatsapp']] . '</span>' : '') . '</a>'
                         . '<a class="centraldecontatos-acao" href="#" data-centraldecontatos-copiar="' . $e($t['exibicao']) . '" title="Copiar"><i class="ti ti-copy"></i></a>'
                         . '</span></div>';
                 }
@@ -279,6 +294,25 @@ class PluginCentraldecontatosContato extends CommonDBTM
         echo '<div class="centraldecontatos-pagina">';
         if (self::podeUsar($item)) {
             echo '<div class="card centraldecontatos-card"><div class="card-header"><h5><i class="ti ti-address-book"></i> Contatos do ' . $e($C::ITENS_SINGULAR[get_class($item)] ?? 'item') . '</h5></div><div class="card-body">' . self::bloco($item, true) . '</div></div>';
+        }
+        if ($C::ligado('wa_ativo')) {
+            global $DB;
+            $conversas = iterator_to_array($DB->request(['FROM' => PluginCentraldecontatosConversa::TABELA, 'WHERE' => ['itemtype' => get_class($item), 'items_id' => (int) $item->getID()], 'ORDER' => 'date_ultima DESC']), false);
+            echo '<div class="card centraldecontatos-card"><div class="card-header"><h5><i class="ti ti-brand-whatsapp"></i> Conversas de WhatsApp deste ' . $e($C::ITENS_SINGULAR[get_class($item)] ?? 'item') . '</h5></div><div class="card-body p-0">';
+            if (!$conversas) {
+                echo '<div class="centraldecontatos-vazio">Nenhuma conversa vinculada. Use o ícone de WhatsApp de um contato para começar.</div>';
+            } else {
+                echo '<ul class="centraldecontatos-lista-conversas">';
+                foreach ($conversas as $cv) {
+                    $t = PluginCentraldecontatosConversa::paraTela($cv);
+                    echo '<li><button type="button" class="centraldecontatos-conversa-item" data-centraldecontatos-chat="' . (int) $t['id'] . '" data-itemtype="' . $e(get_class($item)) . '" data-items-id="' . (int) $item->getID() . '">'
+                        . '<span class="centraldecontatos-conversa-nome">' . $e($t['nome']) . ($t['nao_lidas'] > 0 ? ' <span class="centraldecontatos-badge">' . $t['nao_lidas'] . '</span>' : '') . '</span>'
+                        . '<small>' . $e($t['exibicao']) . ' · ' . $e($t['quando']) . '</small>'
+                        . '<span class="centraldecontatos-conversa-previa">' . $e($t['previa']) . '</span></button></li>';
+                }
+                echo '</ul>';
+            }
+            echo '</div></div>';
         }
         $linhas = self::registros(get_class($item), (int) $item->getID());
         echo '<div class="card centraldecontatos-card"><div class="card-header"><h5><i class="ti ti-history"></i> Contatos registrados</h5></div><div class="card-body p-0">';

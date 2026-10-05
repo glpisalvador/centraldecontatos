@@ -20,6 +20,7 @@ if (!$C::ehAdmin()) {
 $ABAS = [
     'geral'    => ['ti ti-settings', 'Geral'],
     'mensagens' => ['ti ti-message', 'Mensagens e e-mail'],
+    'whatsapp' => ['ti ti-brand-whatsapp', 'WhatsApp'],
     'situacao' => ['ti ti-chart-bar', 'Situação'],
 ];
 $aba = (string) ($_POST['aba'] ?? $_GET['aba'] ?? 'geral');
@@ -61,6 +62,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['save_action']
             $C::setConfig('responder_para', $linha('responder_para', 255));
             Session::addMessageAfterRedirect('Mensagens salvas.', false, INFO);
             break;
+
+        case 'salvar_whatsapp':
+            foreach (['wa_ativo', 'wa_registrar_recebidas', 'wa_recebidas_privado', 'wa_avisar_novas', 'wa_confirmar_leitura', 'wa_tls_inseguro'] as $chave) {
+                $C::setConfig($chave, empty($_POST[$chave]) ? '0' : '1');
+            }
+            $porta = (int) ($_POST['wa_porta'] ?? 3470);
+            $url = trim((string) ($_POST['wa_webhook_url'] ?? ''));
+            if ($porta < 1024 || $porta > 65535) {
+                Session::addMessageAfterRedirect('Porta inválida (use de 1024 a 65535).', false, ERROR);
+                break;
+            }
+            if ($url !== '' && !preg_match('#^https?://#i', $url)) {
+                Session::addMessageAfterRedirect('O endereço do webhook precisa começar com http:// ou https://.', false, ERROR);
+                break;
+            }
+            $mudouServidor = (string) $porta !== (string) $C::getConfig('wa_porta') || $url !== (string) $C::getConfig('wa_webhook_url');
+            $C::setConfig('wa_porta', (string) $porta);
+            $C::setConfig('wa_webhook_url', mb_substr($url, 0, 500));
+            $C::setConfig('wa_midia_max_mb', (string) max(1, min(100, (int) ($_POST['wa_midia_max_mb'] ?? 16))));
+            Session::addMessageAfterRedirect('Configuração do WhatsApp salva.' . ($mudouServidor && PluginCentraldecontatosWhatsapp::rodando() ? ' Reinicie o servidor para aplicar a porta e o endereço.' : ''), false, INFO);
+            break;
     }
 }
 
@@ -97,7 +119,7 @@ echo $card('ti ti-shield-lock', 'Onde e para quem', $explicacao('O bloco "Centra
     . $campo('Mostrar em', '<div class="centraldecontatos-opcoes">' . $itens . '<input type="hidden" name="itens[]" value=""></div>'));
 echo $card('ti ti-message', 'Registro como acompanhamento', $explicacao('Todo contato fica na aba "Contatos". Ligado aqui, ele também vira um acompanhamento do item (com histórico e notificações do GLPI).')
     . $switch('registrar_ligacao', 'Ligações', 'Ao ligar, abre uma janela para registrar o resultado.')
-    . $switch('registrar_whatsapp', 'WhatsApp', 'Registra quando a conversa é aberta, com a mensagem usada.')
+    . $switch('registrar_whatsapp', 'WhatsApp enviado', 'Cada mensagem enviada pelo chat do item vira acompanhamento (sem o servidor próprio: registra a abertura pelo wa.me).')
     . $switch('registrar_email', 'E-mails', 'Registra o e-mail enviado, com o texto.')
     . $switch('privado', 'Ligações e WhatsApp como acompanhamento privado', 'Visíveis só para técnicos.')
     . $switch('email_privado', 'E-mails como acompanhamento privado', 'Desligado: o requerente vê o e-mail que recebeu na linha do tempo.'));
@@ -121,6 +143,38 @@ echo $card('ti ti-mail', 'E-mail', ($remetente === null
     . $campo('E-mail do remetente', $texto('remetente_email', (string) $C::getConfig('remetente_email'), 'Vazio: o das notificações do GLPI', 'email'))
     . $campo('Nome do remetente', $texto('remetente_nome', (string) $C::getConfig('remetente_nome'), 'Vazio: o das notificações do GLPI'))
     . $campo('Responder para', $texto('responder_para', (string) $C::getConfig('responder_para'), 'E-mail lido pelo coletor do GLPI', 'email'), 'Use a caixa de um coletor de e-mail ativo: a resposta do cliente volta ao item como acompanhamento.'));
+echo '</div>' . $salvar . Html::closeForm(false) . '</div>';
+
+// ---------------------------------------------------------------- WhatsApp
+echo '<div data-aba-painel="whatsapp"' . ($aba !== 'whatsapp' ? ' hidden' : '') . '>';
+// Conexão do aparelho: situação atual e o caminho para ligar o servidor e ler o QR Code
+$sw = PluginCentraldecontatosWhatsapp::status();
+$numero = (string) ($sw['servico']['numero'] ?? '');
+if ($sw['conectado']) {
+    [$selo, $classe, $textoConexao] = ['Conectado', 'ok', 'O aparelho ' . $C::telefoneExibicao($numero) . ' está conectado. As conversas já chegam em Assistência &gt; Central de contatos.'];
+} elseif ($sw['ligado']) {
+    [$selo, $classe, $textoConexao] = ['Aguardando o QR Code', 'aviso', 'O servidor está ligado e esperando o aparelho. Clique em <strong>Conectar aparelho</strong> e leia o QR Code com o WhatsApp do celular (Aparelhos conectados &gt; Conectar um aparelho).'];
+} else {
+    [$selo, $classe, $textoConexao] = ['Servidor desligado', 'neutro', 'Clique em <strong>Conectar aparelho</strong>, depois em <strong>Ligar</strong>, e leia o QR Code com o WhatsApp do celular.'];
+}
+echo '<div class="card centraldecontatos-card centraldecontatos-wa-conexao"><div class="card-header centraldecontatos-wa-cab"><h5><i class="ti ti-device-mobile"></i> Conexão do aparelho</h5>'
+    . '<span class="centraldecontatos-selo centraldecontatos-wa-selo-' . $classe . '">' . $e($selo) . '</span></div><div class="card-body centraldecontatos-wa-conexao-corpo">'
+    . '<p class="centraldecontatos-explicacao"><i class="ti ti-info-circle"></i><span>' . $textoConexao . ' A mesma tela fica em Assistência &gt; Central de contatos &gt; Servidor WhatsApp.</span></p>'
+    . '<a class="btn btn-sm centraldecontatos-btn-principal" href="' . $e($C::url('whatsapp.php')) . '"><i class="ti ti-qrcode"></i><span>' . ($sw['conectado'] ? 'Ver servidor WhatsApp' : 'Conectar aparelho') . '</span></a>'
+    . '</div></div>';
+echo $form('salvar_whatsapp', 'whatsapp');
+echo '<div class="centraldecontatos-grade">';
+echo $card('ti ti-brand-whatsapp', 'Servidor WhatsApp próprio', $explicacao('Com o servidor próprio, as conversas acontecem dentro do GLPI: o ícone de WhatsApp dos contatos abre o chat, tudo fica guardado e aparece em Assistência &gt; Central de contatos. <a href="' . $e($C::url('whatsapp.php')) . '">Ligar e parear o aparelho</a>.')
+    . $switch('wa_ativo', 'Usar o servidor WhatsApp da Central', 'Desligado: o ícone volta a abrir o wa.me numa nova aba.')
+    . $switch('wa_avisar_novas', 'Avisar mensagens novas em qualquer tela', 'Mostra um botão com o número de não lidas e um aviso quando chega mensagem.')
+    . $switch('wa_confirmar_leitura', 'Confirmar leitura ao cliente', 'Ao abrir a conversa no GLPI, o cliente vê os traços azuis.'));
+echo $card('ti ti-message', 'Mensagens recebidas no item', $explicacao('Quando o contato está vinculado a um chamado, problema ou mudança aberto (por exemplo, quando a conversa começou pelo item), cada mensagem recebida entra na linha do tempo do item.')
+    . $switch('wa_registrar_recebidas', 'Registrar mensagens recebidas como acompanhamento', 'Imagens e documentos vão anexados ao acompanhamento.')
+    . $switch('wa_recebidas_privado', 'Mensagens recebidas como acompanhamento privado', 'Desligado: o requerente também vê na linha do tempo.'));
+echo $card('ti ti-adjustments', 'Avançado', $campo('Porta local', $texto('wa_porta', (string) PluginCentraldecontatosWhatsapp::porta(), '3470', 'number'), 'Só em 127.0.0.1. Mude se outra aplicação já usa esta porta.')
+    . $campo('Tamanho máximo de mídia (MB)', $texto('wa_midia_max_mb', (string) $C::getConfig('wa_midia_max_mb'), '16', 'number'), 'Vale para arquivos recebidos e enviados.')
+    . $campo('Endereço do webhook', $texto('wa_webhook_url', (string) $C::getConfig('wa_webhook_url'), PluginCentraldecontatosWhatsapp::urlWebhook()), 'Vazio: usa a URL do GLPI (Configurar &gt; Geral). Informe só se o servidor não alcança essa URL.')
+    . $switch('wa_tls_inseguro', 'Aceitar certificado HTTPS não confiável no webhook', 'Use apenas com certificado autoassinado interno.'));
 echo '</div>' . $salvar . Html::closeForm(false) . '</div>';
 
 // ---------------------------------------------------------------- Situação

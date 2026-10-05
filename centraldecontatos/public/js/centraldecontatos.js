@@ -163,8 +163,20 @@
 
     // ------------------------------------------------------------------ WhatsApp
 
-    var abrirWhatsapp = function (raiz, nome, numero, numeroWa) {
+    var abrirWhatsapp = function (raiz, nome, numero, numeroWa, forcarLink) {
         var d = dadosDe(raiz);
+        // Servidor WhatsApp próprio: a conversa acontece aqui no GLPI
+        if (!forcarLink && d.servidor_whatsapp && window.CentraldecontatosChat) {
+            window.CentraldecontatosChat.abrirModal({
+                telefone: numeroWa,
+                nome: nome || '',
+                itemtype: d.itemtype,
+                items_id: d.items_id,
+                rascunho: preencher(d.whatsapp, raiz, nome),
+                aoLink: function () { abrirWhatsapp(raiz, nome, numero, numeroWa, true); }
+            });
+            return;
+        }
         janela('<i class="ti ti-brand-whatsapp"></i> WhatsApp',
             '<p class="centraldecontatos-explicacao"><i class="ti ti-info-circle"></i><span>Conversa com <strong>' + esc(nome || numero) + '</strong> · ' + esc(numero) + '. A conversa abre no WhatsApp numa nova aba.</span></p>' +
             '<div class="centraldecontatos-campo"><label>Mensagem inicial</label><textarea class="form-control form-control-sm" rows="4" data-msg data-foco>' + esc(preencher(d.whatsapp, raiz, nome)) + '</textarea></div>',
