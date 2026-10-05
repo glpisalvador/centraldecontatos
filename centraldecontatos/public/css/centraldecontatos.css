@@ -1588,3 +1588,31 @@ input.centraldecontatos-check:indeterminate::after {
     flex: 1 1 420px;
     margin: 0;
 }
+
+/* Salvar / limpar conversa */
+.centraldecontatos-wa-salvar {
+    position: relative;
+}
+
+.centraldecontatos-wa-salvar .centraldecontatos-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: rgba(229, 165, 75, 0.95);
+}
+
+.centraldecontatos-wa-salvar .centraldecontatos-badge[hidden] {
+    display: none;
+}
+
+.centraldecontatos-wa-topo-acoes .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.centraldecontatos-wa-topo-acoes .centraldecontatos-wa-confirmar {
+    background: rgba(220, 53, 69, 0.1) !important;
+    color: #842029 !important;
+    border-color: rgba(220, 53, 69, 0.4) !important;
+}

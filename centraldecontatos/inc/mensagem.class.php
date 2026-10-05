@@ -297,6 +297,175 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
     }
 
     // =====================================================================
+    // Transcrição da conversa (acompanhamento "Salvar" e "Limpar")
+    // =====================================================================
+
+    /**
+     * Transcrição no visual do WhatsApp (balões, dia, horário, autor, citação, reações, status e mídias),
+     * com cores suaves. Só estilo inline: o GLPI 11/12 mantém style no acompanhamento e remove <style>.
+     * As mídias viram documentos do item (fora da linha do tempo) e aparecem dentro dos balões.
+     */
+    public static function transcricaoHtml(array $conversa, CommonITILObject $item, array $mensagens, string $titulo, string $rodape): string
+    {
+        global $CFG_GLPI;
+        $contato = PluginCentraldecontatosConversa::rotulo($conversa);
+        $telefone = PluginCentraldecontatosConfig::telefoneExibicao((string) $conversa['telefone']);
+        $caixa = 'background:rgba(239,234,226,0.55);border:1px solid rgba(11,20,26,0.06);border-radius:8px;padding:10px 12px;max-width:760px;';
+        $topo = 'background:rgba(0,128,105,0.10);border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:12px;color:#0b3d34;';
+        $chip = 'display:inline-block;background:rgba(255,255,255,0.75);color:rgba(84,101,111,0.95);font-size:11px;padding:3px 10px;border-radius:7px;box-shadow:0 1px 0.5px rgba(11,20,26,0.08);';
+        $balao = 'display:inline-block;text-align:left;max-width:78%;padding:6px 9px 4px;border-radius:7.5px;font-size:13px;line-height:1.4;color:#111b21;box-shadow:0 1px 0.5px rgba(11,20,26,0.10);word-wrap:break-word;overflow-wrap:anywhere;';
+        $recebido = 'background:rgba(255,255,255,0.78);';
+        $enviado = 'background:rgba(217,253,211,0.78);';
+        $hora = 'display:block;text-align:right;font-size:10.5px;color:rgba(17,27,33,0.45);margin-top:1px;';
+
+        $primeira = $mensagens ? (string) $mensagens[0]['date_envio'] : '';
+        $ultima = $mensagens ? (string) end($mensagens)['date_envio'] : '';
+        $html = '<div style="' . $caixa . '">';
+        $html .= '<div style="' . $topo . '"><strong>' . htmlescape($titulo) . '</strong> &middot; ' . htmlescape($contato)
+            . ($contato !== $telefone ? ' (' . htmlescape($telefone) . ')' : '')
+            . ' &middot; ' . count($mensagens) . ' mensage' . (count($mensagens) === 1 ? 'm' : 'ns')
+            . ($primeira !== '' ? '<br><span style="font-size:11px;color:rgba(11,61,52,0.75);">De ' . htmlescape(Html::convDateTime($primeira)) . ' a ' . htmlescape(Html::convDateTime($ultima)) . ' &middot; registrado por ' . htmlescape((string) getUserName((int) Session::getLoginUserID())) . '</span>' : '')
+            . '</div>';
+
+        $nomes = [];
+        $diaAnterior = '';
+        $autorAnterior = '';
+        foreach ($mensagens as $m) {
+            $data = (string) $m['date_envio'];
+            $dia = substr($data, 0, 10);
+            if ($dia !== $diaAnterior) {
+                $html .= '<div style="text-align:center;margin:8px 0 6px;"><span style="' . $chip . '">' . htmlescape(self::rotuloDia($dia)) . '</span></div>';
+                $diaAnterior = $dia;
+                $autorAnterior = '';
+            }
+            $saida = $m['direcao'] === 'saida';
+            $uid = (int) $m['users_id'];
+            if (!$saida) {
+                $autor = $contato;
+            } elseif ($m['origem'] === 'celular') {
+                $autor = 'Enviada pelo celular';
+            } else {
+                $autor = $uid > 0 ? ($nomes[$uid] ??= (string) getUserName($uid)) : 'Atendimento';
+            }
+            $novo = $autor !== $autorAnterior;
+            $autorAnterior = $autor;
+            $canto = $novo ? ($saida ? 'border-top-right-radius:0;' : 'border-top-left-radius:0;') : '';
+            $html .= '<div style="text-align:' . ($saida ? 'right' : 'left') . ';margin:' . ($novo ? '6px' : '2px') . ' 0 0;">';
+            $html .= '<div style="' . $balao . ($saida ? $enviado : $recebido) . $canto . '">';
+            if ($novo) {
+                $html .= '<span style="display:block;font-size:11.5px;font-weight:600;color:' . ($saida ? 'rgba(0,128,105,0.95)' : 'rgba(2,126,181,0.95)') . ';margin-bottom:1px;">' . htmlescape($autor) . '</span>';
+            }
+            if (trim((string) $m['citada_texto']) !== '') {
+                $html .= '<span style="display:block;margin:2px 0 4px;padding:4px 8px;border-left:3px solid rgba(0,128,105,0.6);background:rgba(11,20,26,0.05);border-radius:4px;font-size:12px;color:rgba(17,27,33,0.7);">'
+                    . htmlescape(mb_substr((string) $m['citada_texto'], 0, 200)) . '</span>';
+            }
+            if ((string) $m['midia_arquivo'] !== '') {
+                $html .= self::midiaNaTranscricao($m, $item, $contato);
+            }
+            $html .= self::formatarTexto((string) $m['conteudo']);
+            $html .= '<span style="' . $hora . '">' . htmlescape(substr($data, 11, 5));
+            if ($saida) {
+                $html .= match ((string) $m['status']) {
+                    'erro'     => ' <span style="color:rgba(220,53,69,0.85);" title="Não enviada">&#9888; não enviada</span>',
+                    'pendente' => ' <span style="color:rgba(17,27,33,0.4);">&#128339;</span>',
+                    'lida'     => ' <span style="color:rgba(83,189,235,0.95);letter-spacing:-3px;" title="Lida">&#10003;&#10003;</span>',
+                    'entregue' => ' <span style="color:rgba(17,27,33,0.45);letter-spacing:-3px;" title="Entregue">&#10003;&#10003;</span>',
+                    default    => ' <span style="color:rgba(17,27,33,0.45);" title="Enviada">&#10003;</span>',
+                };
+            }
+            $html .= '</span>';
+            $reacoes = array_filter([(string) $m['reacao_cliente'], (string) $m['reacao_nossa']]);
+            if ($reacoes) {
+                $html .= '<span style="display:inline-block;margin-top:2px;padding:0 6px;border-radius:10px;background:rgba(255,255,255,0.9);box-shadow:0 1px 1px rgba(11,20,26,0.15);font-size:13px;">' . htmlescape(implode(' ', $reacoes)) . '</span>';
+            }
+            $html .= '</div></div>';
+        }
+        $html .= '<div style="text-align:center;margin:10px 0 2px;"><span style="' . $chip . '">' . htmlescape($rodape) . '</span></div>';
+        return $html . '</div>';
+    }
+
+    /** Mídia dentro do balão, apontando para um documento do item */
+    private static function midiaNaTranscricao(array $m, CommonITILObject $item, string $contato): string
+    {
+        global $CFG_GLPI;
+        $tipo = (string) $m['tipo'];
+        $caminho = PluginCentraldecontatosWhatsapp::caminhoMidia((string) $m['midia_arquivo']);
+        $rotulos = ['imagem' => 'imagem', 'audio' => 'audio', 'video' => 'video', 'documento' => 'documento', 'figurinha' => 'figurinha'];
+        $ext = strtolower(pathinfo((string) $m['midia_arquivo'], PATHINFO_EXTENSION));
+        $nome = trim((string) $m['midia_nome']) !== ''
+            ? (string) $m['midia_nome']
+            : 'WhatsApp ' . ($rotulos[$tipo] ?? 'arquivo') . ' ' . str_replace([' ', ':'], ['_', '-'], substr((string) $m['date_envio'], 0, 16)) . ' - ' . preg_replace('/[^\w .-]+/u', '', $contato) . '.' . $ext;
+        $docid = $caminho ? self::criarDocumento($caminho, $nome, $item) : 0;
+        if ($docid <= 0) {
+            return '<span style="display:block;font-size:12px;color:rgba(17,27,33,0.55);font-style:italic;">' . htmlescape(self::rotuloMidia($tipo) ?: 'Arquivo') . ($tipo === 'documento' && $m['midia_nome'] ? ': ' . htmlescape((string) $m['midia_nome']) : '') . ' (arquivo não anexado: tipo não aceito pelo GLPI ou indisponível)</span>';
+        }
+        $url = htmlescape($CFG_GLPI['root_doc'] . '/front/document.send.php?docid=' . $docid . '&itemtype=' . get_class($item) . '&items_id=' . (int) $item->getID());
+        switch ($tipo) {
+            case 'imagem':
+            case 'figurinha':
+                return '<a href="' . $url . '" target="_blank" title="Abrir imagem em tamanho real"><img src="' . $url . '" alt="Imagem do WhatsApp" style="display:block;max-width:' . ($tipo === 'figurinha' ? '140' : '280') . 'px;width:100%;height:auto;border-radius:6px;margin:2px 0 3px;"></a>';
+            case 'audio':
+                return '<audio controls preload="metadata" src="' . $url . '" style="display:block;width:260px;max-width:100%;height:40px;margin:2px 0;"></audio>'
+                    . '<a href="' . $url . '" target="_blank" style="font-size:11px;color:rgba(0,128,105,0.9);">&#127908; baixar áudio</a>';
+            case 'video':
+                return '<video controls preload="metadata" src="' . $url . '" style="display:block;max-width:280px;width:100%;border-radius:6px;margin:2px 0;"></video>'
+                    . '<a href="' . $url . '" target="_blank" style="font-size:11px;color:rgba(0,128,105,0.9);">&#127916; baixar vídeo</a>';
+            default:
+                return '<a href="' . $url . '" target="_blank" style="display:block;margin:2px 0 3px;padding:6px 8px;border-radius:6px;background:rgba(11,20,26,0.05);color:#111b21;text-decoration:none;font-size:12px;">&#128196; <strong>' . htmlescape($nome) . '</strong>'
+                    . ((int) $m['midia_tamanho'] > 0 ? ' <span style="color:rgba(17,27,33,0.5);">(' . number_format((int) $m['midia_tamanho'] / 1024, 0, ',', '.') . ' KB)</span>' : '') . '</a>';
+        }
+    }
+
+    /** Documento do GLPI ligado ao item, fora da linha do tempo (aparece só dentro do acompanhamento) */
+    private static function criarDocumento(string $caminho, string $nome, CommonITILObject $item): int
+    {
+        $ext = strtolower(pathinfo($caminho, PATHINFO_EXTENSION));
+        if (countElementsInTable('glpi_documenttypes', ['ext' => $ext, 'is_uploadable' => 1]) === 0) {
+            return 0;
+        }
+        $prefixo = uniqid('cdc', true) . '_';
+        $arquivo = $prefixo . basename($caminho);
+        if (!@copy($caminho, GLPI_TMP_DIR . '/' . $arquivo)) {
+            return 0;
+        }
+        $doc = new Document();
+        $id = (int) $doc->add([
+            'name' => mb_substr($nome, 0, 255), 'entities_id' => (int) $item->fields['entities_id'], 'is_recursive' => 0,
+            '_filename' => [$arquivo], '_prefix_filename' => [$prefixo], '_only_if_upload_succeed' => 1,
+        ]);
+        @unlink(GLPI_TMP_DIR . '/' . $arquivo);
+        if ($id <= 0) {
+            return 0;
+        }
+        (new Document_Item())->add([
+            'documents_id' => $id, 'itemtype' => get_class($item), 'items_id' => (int) $item->getID(),
+            'entities_id' => (int) $item->fields['entities_id'], 'timeline_position' => CommonITILObject::NO_TIMELINE,
+        ]);
+        return $id;
+    }
+
+    /** O acompanhamento fica para sempre: data com dia da semana (nunca "hoje"/"ontem") */
+    private static function rotuloDia(string $dia): string
+    {
+        $t = $dia !== '' ? strtotime($dia) : false;
+        if ($t === false) {
+            return $dia;
+        }
+        $semana = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+        return $semana[(int) date('w', $t)] . ', ' . date('d/m/Y', $t);
+    }
+
+    /** Escapa e aplica *negrito*, _itálico_, ~riscado~ e quebras de linha */
+    private static function formatarTexto(string $texto): string
+    {
+        $s = htmlescape(trim(strip_tags($texto)));
+        $s = (string) preg_replace('/(?<![\w*])\*(?!\s)([^*\n]+?)(?<!\s)\*(?![\w*])/u', '<strong>$1</strong>', $s);
+        $s = (string) preg_replace('/(?<![\w_])_(?!\s)([^_\n]+?)(?<!\s)_(?![\w_])/u', '<em>$1</em>', $s);
+        $s = (string) preg_replace('/(?<![\w~])~(?!\s)([^~\n]+?)(?<!\s)~(?![\w~])/u', '<s>$1</s>', $s);
+        return nl2br($s, false);
+    }
+
+    // =====================================================================
     // Leitura para a tela
     // =====================================================================
 

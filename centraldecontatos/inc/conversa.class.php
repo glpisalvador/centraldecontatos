@@ -102,7 +102,14 @@ class PluginCentraldecontatosConversa extends CommonDBTM
         if ($itemtype !== '' && !isset(PluginCentraldecontatosConfig::ITENS[$itemtype])) {
             return false;
         }
-        return (bool) $DB->update(self::TABELA, ['itemtype' => $itemtype, 'items_id' => $itemtype === '' ? 0 : $items_id], ['id' => $id]);
+        $c = self::obter($id);
+        $novoId = $itemtype === '' ? 0 : $items_id;
+        $campos = ['itemtype' => $itemtype, 'items_id' => $novoId];
+        // Outro item: ele recebe a conversa inteira quando for salva
+        if ($c && ((string) $c['itemtype'] !== $itemtype || (int) $c['items_id'] !== $novoId)) {
+            $campos['salva_ate_id'] = 0;
+        }
+        return (bool) $DB->update(self::TABELA, $campos, ['id' => $id]);
     }
 
     /** Item vinculado, se ainda estiver aberto (não solucionado nem fechado) */
@@ -117,6 +124,110 @@ class PluginCentraldecontatosConversa extends CommonDBTM
             return null;
         }
         return $item;
+    }
+
+    /** Item vinculado (aberto ou não), se existir e a pessoa puder acompanhar */
+    public static function itemVinculado(array $c): ?CommonITILObject
+    {
+        $tipo = (string) ($c['itemtype'] ?? '');
+        if ($tipo === '' || !isset(PluginCentraldecontatosConfig::ITENS[$tipo]) || (int) $c['items_id'] <= 0) {
+            return null;
+        }
+        $item = new $tipo();
+        return $item->getFromDB((int) $c['items_id']) && empty($item->fields['is_deleted']) ? $item : null;
+    }
+
+    /** Mensagens ainda não gravadas como acompanhamento no item */
+    public static function mensagensNaoSalvas(array $c): array
+    {
+        global $DB;
+        return iterator_to_array($DB->request([
+            'FROM'  => PluginCentraldecontatosMensagem::TABELA,
+            'WHERE' => ['conversas_id' => (int) $c['id'], 'id' => ['>', (int) $c['salva_ate_id']]],
+            'ORDER' => 'id ASC',
+            'LIMIT' => 3000,
+        ]), false);
+    }
+
+    /**
+     * Grava a conversa (o que ainda não foi gravado) como acompanhamento no item vinculado.
+     * @return array{ok: bool, mensagem: string, followup: int, quantidade: int}
+     */
+    public static function salvarNoItem(int $id, string $motivo = 'salvar'): array
+    {
+        global $DB;
+        $c = self::obter($id);
+        if (!$c) {
+            return ['ok' => false, 'mensagem' => 'Conversa não encontrada.', 'followup' => 0, 'quantidade' => 0];
+        }
+        $item = self::itemVinculado($c);
+        if (!$item) {
+            return ['ok' => false, 'mensagem' => 'A conversa não está vinculada a um chamado, problema ou mudança. Vincule antes de salvar.', 'followup' => 0, 'quantidade' => 0];
+        }
+        if (!$item->canAddFollowups()) {
+            return ['ok' => false, 'mensagem' => 'Você não pode adicionar acompanhamentos em ' . self::rotuloItem(get_class($item), (int) $item->getID()) . '.', 'followup' => 0, 'quantidade' => 0];
+        }
+        $msgs = self::mensagensNaoSalvas($c);
+        if (!$msgs) {
+            return ['ok' => true, 'mensagem' => 'Nada novo para salvar: todas as mensagens já estão no acompanhamento.', 'followup' => 0, 'quantidade' => 0];
+        }
+        $anteriores = (int) $c['salva_ate_id'] > 0;
+        $titulo = 'Conversa de WhatsApp' . ($anteriores ? ' (continuação)' : '');
+        $rodape = $motivo === 'limpar'
+            ? 'Conversa limpa no GLPI em ' . Html::convDateTime(date('Y-m-d H:i:s')) . ($anteriores ? ' · as mensagens anteriores estão em acompanhamentos anteriores' : '')
+            : 'Conversa salva em ' . Html::convDateTime(date('Y-m-d H:i:s'));
+        $html = PluginCentraldecontatosMensagem::transcricaoHtml($c, $item, $msgs, $titulo, $rodape);
+        $f = new ITILFollowup();
+        $fid = (int) $f->add([
+            'itemtype'   => get_class($item),
+            'items_id'   => (int) $item->getID(),
+            'content'    => $html,
+            'is_private' => PluginCentraldecontatosConfig::ligado('privado') ? 1 : 0,
+            '_assinaturausuario_ignorar' => 1,
+        ]);
+        if ($fid <= 0) {
+            return ['ok' => false, 'mensagem' => 'O GLPI não aceitou o acompanhamento.', 'followup' => 0, 'quantidade' => 0];
+        }
+        $DB->update(self::TABELA, ['salva_ate_id' => (int) end($msgs)['id']], ['id' => $id]);
+        $DB->insert(PluginCentraldecontatosContato::TABELA, [
+            'itemtype' => get_class($item), 'items_id' => (int) $item->getID(), 'entities_id' => (int) $item->fields['entities_id'],
+            'users_id' => (int) Session::getLoginUserID(), 'tipo' => 'whatsapp', 'contato' => mb_substr(self::rotulo($c), 0, 255),
+            'destino' => PluginCentraldecontatosConfig::telefoneExibicao((string) $c['telefone']),
+            'resultado' => $motivo === 'limpar' ? 'Conversa limpa' : 'Conversa salva', 'observacao' => count($msgs) . ' mensagem(ns)',
+            'sucesso' => 1, 'itilfollowups_id' => $fid, 'date_creation' => date('Y-m-d H:i:s'),
+        ]);
+        return ['ok' => true, 'mensagem' => count($msgs) . ' mensagem(ns) salva(s) em ' . self::rotuloItem(get_class($item), (int) $item->getID()) . '.', 'followup' => $fid, 'quantidade' => count($msgs)];
+    }
+
+    /**
+     * Limpa a conversa: grava antes no item vinculado o que ainda não foi gravado e apaga as mensagens
+     * (e as mídias) do chat. A conversa continua existindo, com o mesmo vínculo.
+     */
+    public static function limpar(int $id): array
+    {
+        global $DB;
+        $c = self::obter($id);
+        if (!$c) {
+            return ['ok' => false, 'mensagem' => 'Conversa não encontrada.'];
+        }
+        $salvo = null;
+        if (self::itemVinculado($c)) {
+            $salvo = self::salvarNoItem($id, 'limpar');
+            if (!$salvo['ok']) {
+                return ['ok' => false, 'mensagem' => 'A conversa não foi limpa: ' . $salvo['mensagem']];
+            }
+        }
+        $n = 0;
+        foreach ($DB->request(['SELECT' => ['id', 'midia_arquivo'], 'FROM' => PluginCentraldecontatosMensagem::TABELA, 'WHERE' => ['conversas_id' => $id]]) as $m) {
+            if ($caminho = PluginCentraldecontatosWhatsapp::caminhoMidia((string) $m['midia_arquivo'])) {
+                @unlink($caminho);
+            }
+            $n++;
+        }
+        $DB->delete(PluginCentraldecontatosMensagem::TABELA, ['conversas_id' => $id]);
+        $DB->update(self::TABELA, ['nao_lidas' => 0, 'salva_ate_id' => 0, 'ultima_mensagem' => '', 'ultima_direcao' => ''], ['id' => $id]);
+        $onde = $salvo && $salvo['followup'] > 0 ? ' Antes, ' . $salvo['quantidade'] . ' mensagem(ns) foram salvas no acompanhamento de ' . self::rotuloItem((string) $c['itemtype'], (int) $c['items_id']) . '.' : ($salvo ? ' Tudo já estava salvo no acompanhamento do item.' : ' Sem item vinculado: nada foi salvo.');
+        return ['ok' => true, 'mensagem' => 'Conversa limpa (' . $n . ' mensagem(ns)).' . $onde];
     }
 
     public static function rotuloItem(string $itemtype, int $id): string
@@ -234,6 +345,7 @@ class PluginCentraldecontatosConversa extends CommonDBTM
             'item'       => self::rotuloItem((string) $c['itemtype'], (int) $c['items_id']),
             'item_url'   => self::urlItem((string) $c['itemtype'], (int) $c['items_id']),
             'arquivada'  => (int) $c['is_arquivada'] === 1,
+            'nao_salvas' => self::itemVinculado($c) ? countElementsInTable(PluginCentraldecontatosMensagem::TABELA, ['conversas_id' => (int) $c['id'], 'id' => ['>', (int) ($c['salva_ate_id'] ?? 0)]]) : 0,
         ];
     }
 }
