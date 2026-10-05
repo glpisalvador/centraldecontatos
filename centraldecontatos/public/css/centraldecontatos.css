@@ -1,0 +1,717 @@
+/* Plugin Central de Contatos - visual próximo do GLPI nativo; todos os seletores prefixados.
+ * Usa as variáveis do tema (Tabler/Bootstrap) para acompanhar as paletas do GLPI. */
+
+/* ------------------------------------------------------------ bloco de contatos */
+.centraldecontatos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    font-size: 12px;
+    color: var(--tblr-body-color, #333);
+}
+
+.centraldecontatos-titulo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tblr-secondary, #6c757d);
+    text-transform: uppercase;
+}
+
+.centraldecontatos-n {
+    padding: 0 6px;
+    border-radius: 9px;
+    background: rgba(108, 117, 125, 0.12);
+    font-size: 10px;
+}
+
+.centraldecontatos-secao .accordion-button .ti {
+    margin-right: 0.5rem;
+}
+
+.centraldecontatos-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.centraldecontatos-contato {
+    padding: 6px 8px;
+    border: 1px solid var(--tblr-border-color, #e0e0e0);
+    border-radius: 4px;
+    background: var(--tblr-bg-surface, #fff);
+}
+
+.centraldecontatos-contato-nome {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.centraldecontatos-contato-nome small {
+    font-size: 10px;
+    font-weight: 400;
+    color: #999;
+}
+
+.centraldecontatos-canal {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 26px;
+    color: var(--tblr-secondary, #6c757d);
+}
+
+.centraldecontatos-canal > .ti {
+    font-size: 13px;
+    color: #999;
+}
+
+.centraldecontatos-valor {
+    color: var(--tblr-body-color, #333);
+    word-break: break-all;
+}
+
+.centraldecontatos-canal small {
+    font-size: 10px;
+    color: #999;
+}
+
+.centraldecontatos-acoes {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.centraldecontatos-acao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 24px;
+    border-radius: 4px;
+    color: #5c636a;
+    text-decoration: none;
+    transition: background 0.15s ease-in-out;
+}
+
+.centraldecontatos-acao:hover {
+    background: rgba(108, 117, 125, 0.12);
+    color: var(--tblr-body-color, #333);
+}
+
+.centraldecontatos-acao[data-centraldecontatos-ligar]:hover {
+    background: rgba(13, 110, 253, 0.1);
+    color: #2f5fa8;
+}
+
+.centraldecontatos-acao[data-centraldecontatos-whatsapp]:hover {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.centraldecontatos-acao .ti {
+    font-size: 15px;
+}
+
+.centraldecontatos-outro {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.centraldecontatos-outro input {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-right: 4px;
+}
+
+.centraldecontatos-outro .btn {
+    padding: 3px 7px;
+}
+
+.centraldecontatos-vazio {
+    padding: 8px 10px;
+    color: #999;
+    font-size: 12px;
+}
+
+.centraldecontatos-aba .centraldecontatos-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+/* ------------------------------------------------------------ janelas */
+.centraldecontatos-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.centraldecontatos-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.centraldecontatos-modal .modal-footer {
+    gap: 6px;
+}
+
+.centraldecontatos-modal .modal-footer .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.centraldecontatos-resultados {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.centraldecontatos-resultado {
+    margin: 0;
+    cursor: pointer;
+}
+
+.centraldecontatos-resultado input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.centraldecontatos-resultado span {
+    display: inline-block;
+    padding: 4px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 14px;
+    font-size: 12px;
+    color: #495057;
+    transition: all 0.15s ease-in-out;
+}
+
+.centraldecontatos-resultado:hover span {
+    background: #f8f9fa;
+}
+
+.centraldecontatos-resultado input:checked + span {
+    background: #e8f4fc;
+    border-color: rgba(13, 110, 253, 0.4);
+    color: #2f3f64;
+    font-weight: 600;
+}
+
+.centraldecontatos-resultado input:focus-visible + span {
+    box-shadow: 0 0 0 0.2rem rgba(240, 201, 70, 0.3);
+}
+
+.centraldecontatos-grade-email {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 700px) {
+    .centraldecontatos-grade-email {
+        grid-template-columns: 1fr;
+    }
+}
+
+.centraldecontatos-atalhos-email {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.centraldecontatos-chip {
+    padding: 1px 8px;
+    border: 1px solid rgba(13, 110, 253, 0.2);
+    border-radius: 10px;
+    background: rgba(13, 110, 253, 0.05);
+    color: #2f3f64;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.centraldecontatos-chip:hover {
+    background: rgba(13, 110, 253, 0.1);
+}
+
+/* ------------------------------------------------------------ campos, cartões e páginas */
+.centraldecontatos-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.centraldecontatos-campo > label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.centraldecontatos-campo small {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.centraldecontatos-campo code {
+    font-size: 11px;
+    color: #2f3f64;
+    background: rgba(13, 110, 253, 0.06);
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+.centraldecontatos-explicacao {
+    font-size: 12px;
+    color: #6c757d;
+    margin: 0;
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.centraldecontatos-explicacao i {
+    margin-top: 2px;
+}
+
+.centraldecontatos-alerta {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+.centraldecontatos-alerta-aviso {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #664d03;
+}
+
+.btn.centraldecontatos-btn-principal {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e5a54b;
+    border: 1px solid #e5a54b;
+    color: #fff;
+}
+
+.btn.centraldecontatos-btn-principal:hover,
+.btn.centraldecontatos-btn-principal:focus {
+    background: #d8973c;
+    border-color: #d8973c;
+    color: #fff;
+}
+
+.centraldecontatos-pagina {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 13px;
+    color: #333;
+    padding: 4px 0 16px;
+}
+
+.centraldecontatos-pagina [data-aba-painel],
+.centraldecontatos-pagina .centraldecontatos-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.centraldecontatos-pagina [data-aba-painel][hidden] {
+    display: none;
+}
+
+.centraldecontatos-abas.nav-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.centraldecontatos-abas.nav-tabs .nav-link.active {
+    font-weight: 600;
+    border-bottom-color: transparent;
+}
+
+.card.centraldecontatos-card {
+    border: 1px solid #dee2e6;
+    box-shadow: none;
+    margin: 0;
+    overflow: visible;
+}
+
+.centraldecontatos-card > .card-header {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.centraldecontatos-card > .card-header h5 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.centraldecontatos-card > .card-body {
+    padding: 12px 15px;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.centraldecontatos-card > .card-body.p-0 {
+    padding: 0;
+}
+
+.centraldecontatos-grade {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px 20px;
+    align-items: start;
+}
+
+@media (max-width: 1300px) {
+    .centraldecontatos-grade {
+        grid-template-columns: 1fr;
+    }
+}
+
+.centraldecontatos-opcoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+}
+
+.centraldecontatos-opcao {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.centraldecontatos-switch .form-check-input {
+    width: 2.5em;
+    height: 1.3em;
+    cursor: pointer;
+}
+
+.centraldecontatos-switch .form-check-input:checked {
+    background-color: #f0c946;
+    border-color: #e0b830;
+}
+
+.centraldecontatos-switch .form-check-input:focus {
+    border-color: #e0b830;
+    box-shadow: 0 0 0 0.2rem rgba(240, 201, 70, 0.25);
+}
+
+.centraldecontatos-switch-linha {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding-left: 0;
+    margin: 0;
+}
+
+.centraldecontatos-switch-linha .form-check-input {
+    float: none;
+    flex: 0 0 auto;
+    margin: 1px 0 0;
+}
+
+.centraldecontatos-switch-linha .form-check-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+}
+
+.centraldecontatos-switch-linha .form-check-label small {
+    font-size: 11px;
+    font-weight: 400;
+    color: #6c757d;
+}
+
+.centraldecontatos-rodape-form {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.centraldecontatos-tabela {
+    font-size: 12px;
+    margin: 0;
+}
+
+.centraldecontatos-tabela thead th {
+    background: #f8f9fa;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6c757d;
+    padding: 8px 10px;
+    white-space: nowrap;
+}
+
+.centraldecontatos-tabela td {
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+.centraldecontatos-destino small,
+.centraldecontatos-obs {
+    display: block;
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.centraldecontatos-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.centraldecontatos-tipo-ligacao {
+    background: rgba(13, 110, 253, 0.08);
+    color: #2f5fa8;
+}
+
+.centraldecontatos-tipo-whatsapp {
+    background: rgba(25, 135, 84, 0.08);
+    color: #198754;
+}
+
+.centraldecontatos-tipo-email {
+    background: rgba(108, 117, 125, 0.1);
+    color: #41464b;
+}
+
+.centraldecontatos-selo {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(108, 117, 125, 0.1);
+    border: 1px solid rgba(108, 117, 125, 0.3);
+    color: #41464b;
+}
+
+.centraldecontatos-selo-erro {
+    background: rgba(220, 53, 69, 0.08);
+    border-color: rgba(220, 53, 69, 0.3);
+    color: #842029;
+}
+
+.centraldecontatos-pequeno {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.centraldecontatos-numeros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.centraldecontatos-numeros > div {
+    flex: 1 1 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+.centraldecontatos-numeros strong {
+    font-size: 20px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.centraldecontatos-numeros span {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+/* ------------------------------------------------------------ multiselect e checkbox */
+.centraldecontatos-ms {
+    position: relative;
+}
+
+.centraldecontatos-ms-cabecalho {
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+    background-color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.centraldecontatos-ms-dropdown {
+    position: absolute;
+    z-index: 1050;
+    left: 0;
+    right: 0;
+    top: calc(100% + 2px);
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.centraldecontatos-ms-topo {
+    padding: 6px 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.centraldecontatos-ms-busca {
+    max-width: 350px;
+}
+
+.centraldecontatos-ms-todos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 5px 10px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.centraldecontatos-ms-opcoes {
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.centraldecontatos-ms-opcao {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    margin: 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.centraldecontatos-ms-opcao[hidden] {
+    display: none;
+}
+
+.centraldecontatos-ms-opcao:hover {
+    background: #f8f9fa;
+}
+
+.centraldecontatos-ms-opcao.selected {
+    background: #e8f4fc;
+}
+
+.centraldecontatos-ms-rotulo {
+    flex: 1;
+}
+
+.centraldecontatos-ms-rotulo small {
+    color: #999;
+    margin-left: 4px;
+}
+
+.centraldecontatos-ms-contador {
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+}
+
+input.centraldecontatos-check {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.15em;
+    height: 1.15em;
+    border: 2px solid #d0d0d0;
+    border-radius: 3px;
+    background: #fff;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
+    transition: all 0.15s ease-in-out;
+}
+
+input.centraldecontatos-check:hover {
+    border-color: #e0b830;
+}
+
+input.centraldecontatos-check:focus {
+    outline: none;
+    border-color: #e0b830;
+    box-shadow: 0 0 0 0.2rem rgba(240, 201, 70, 0.25);
+}
+
+input.centraldecontatos-check:checked,
+input.centraldecontatos-check:indeterminate {
+    background: #f0c946;
+    border-color: #e0b830;
+}
+
+input.centraldecontatos-check:checked::after {
+    content: '';
+    position: absolute;
+    left: 0.3em;
+    top: 0.08em;
+    width: 0.3em;
+    height: 0.6em;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+input.centraldecontatos-check:indeterminate::after {
+    content: '';
+    position: absolute;
+    left: 0.18em;
+    top: 0.42em;
+    width: 0.5em;
+    border-top: 2px solid #fff;
+}
