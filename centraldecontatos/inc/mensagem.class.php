@@ -114,6 +114,15 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
         $id = (int) $DB->insertId();
         PluginCentraldecontatosConversa::tocar((int) $conversa['id'], ($deMim ? 'Você: ' : '') . self::previa($tipo, $texto, (string) ($midia['nome'] ?? '')), $deMim ? 'saida' : 'entrada', !$deMim);
 
+        // Resposta "1"/"2" a um pedido de validação enviado por esta conversa
+        if (!$deMim && $tipo === 'texto') {
+            try {
+                PluginCentraldecontatosValidacao::processarResposta($conversa, $texto, $citada ? (string) ($citada['wa_id'] ?? '') : '');
+            } catch (\Throwable $e) {
+                error_log('Plugin centraldecontatos (validação): ' . $e->getMessage());
+            }
+        }
+
         // Recebida de contato ligado a um item aberto: vira acompanhamento no item
         if (!$deMim && PluginCentraldecontatosConfig::ligado('wa_registrar_recebidas') && ($item = PluginCentraldecontatosConversa::itemAberto($conversa))) {
             $html = '<p><strong>WhatsApp recebido</strong> de ' . htmlescape(PluginCentraldecontatosConversa::rotulo($conversa)) . ' · ' . htmlescape(PluginCentraldecontatosConfig::telefoneExibicao((string) $conversa['telefone'])) . '</p>'
@@ -176,7 +185,7 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
         $citar = null;
         $citada = $citarId > 0 ? self::obter($citarId) : null;
         if ($citada && (int) $citada['conversas_id'] === (int) $conversa['id'] && (string) $citada['wa_id'] !== '') {
-            $citar = ['wa_id' => (string) $citada['wa_id'], 'de_mim' => $citada['direcao'] === 'saida', 'texto' => mb_substr(self::previa((string) $citada['tipo'], (string) $citada['conteudo']), 0, 300)];
+            $citar = ['wa_id' => (string) $citada['wa_id'], 'de_mim' => $citada['direcao'] === 'saida', 'texto' => mb_substr(self::previa((string) $citada['tipo'], (string) $citada['conteudo'], (string) $citada['midia_nome']), 0, 300)];
         }
         if ($item) {
             PluginCentraldecontatosConversa::vincular((int) $conversa['id'], get_class($item), (int) $item->getID());
@@ -328,6 +337,12 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
             . '</div>';
 
         $nomes = [];
+        $porWaId = [];
+        foreach ($mensagens as $m) {
+            if ((string) $m['wa_id'] !== '') {
+                $porWaId[(string) $m['wa_id']] = $m;
+            }
+        }
         $diaAnterior = '';
         $autorAnterior = '';
         foreach ($mensagens as $m) {
@@ -356,7 +371,10 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
                 $html .= '<span style="display:block;font-size:11.5px;font-weight:600;color:' . ($saida ? 'rgba(0,128,105,0.95)' : 'rgba(2,126,181,0.95)') . ';margin-bottom:1px;">' . htmlescape($autor) . '</span>';
             }
             if (trim((string) $m['citada_texto']) !== '') {
-                $html .= '<span style="display:block;margin:2px 0 4px;padding:4px 8px;border-left:3px solid rgba(0,128,105,0.6);background:rgba(11,20,26,0.05);border-radius:4px;font-size:12px;color:rgba(17,27,33,0.7);">'
+                $orig = $porWaId[(string) $m['citada_wa_id']] ?? null;
+                $autorCitada = $orig ? ($orig['direcao'] === 'saida' ? 'Você' : $contato) : '';
+                $html .= '<span style="display:block;margin:2px 0 4px;padding:4px 8px;border-left:3px solid ' . ($autorCitada === 'Você' ? 'rgba(0,128,105,0.8)' : 'rgba(2,126,181,0.8)') . ';background:rgba(11,20,26,0.05);border-radius:4px;font-size:12px;color:rgba(17,27,33,0.7);">'
+                    . ($autorCitada !== '' ? '<strong style="display:block;font-size:11px;">' . htmlescape($autorCitada) . '</strong>' : '')
                     . htmlescape(mb_substr((string) $m['citada_texto'], 0, 200)) . '</span>';
             }
             if ((string) $m['midia_arquivo'] !== '') {
@@ -469,6 +487,29 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
     // Leitura para a tela
     // =====================================================================
 
+    /** Mensagem citada para a tela: autor, texto e miniatura da mídia (quando ela está na conversa) */
+    public static function citadaParaTela(array $m, ?array $original, string $contato): ?array
+    {
+        if ((string) $m['citada_texto'] === '' && !$original) {
+            return null;
+        }
+        $c = ['texto' => (string) $m['citada_texto'], 'autor' => '', 'tipo' => 'texto', 'url' => '', 'id' => 0];
+        if ($original) {
+            $c['id'] = (int) $original['id'];
+            $c['autor'] = $original['direcao'] === 'saida' ? 'Você' : $contato;
+            $c['tipo'] = (string) $original['tipo'];
+            if (trim((string) $original['conteudo']) !== '') {
+                $c['texto'] = mb_strimwidth((string) $original['conteudo'], 0, 300, '…');
+            } elseif ($c['tipo'] !== 'texto') {
+                $c['texto'] = self::previa($c['tipo'], '', (string) $original['midia_nome']);
+            }
+            if ((string) $original['midia_arquivo'] !== '' && PluginCentraldecontatosWhatsapp::caminhoMidia((string) $original['midia_arquivo'])) {
+                $c['url'] = PluginCentraldecontatosConfig::url('midia.php', ['id' => (int) $original['id']]);
+            }
+        }
+        return $c;
+    }
+
     public static function paraTela(array $m, array $nomes = []): array
     {
         $midia = null;
@@ -489,7 +530,7 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
             'tipo'      => (string) $m['tipo'],
             'texto'     => (string) $m['conteudo'],
             'midia'     => $midia,
-            'citada'    => (string) $m['citada_texto'] !== '' ? (string) $m['citada_texto'] : null,
+            'citada'    => $m['_citada'] ?? ((string) $m['citada_texto'] !== '' ? ['texto' => (string) $m['citada_texto'], 'autor' => '', 'tipo' => 'texto', 'url' => '', 'id' => 0] : null),
             'reacao_cliente' => (string) $m['reacao_cliente'],
             'reacao_nossa'   => (string) $m['reacao_nossa'],
             'status'    => (string) $m['status'],
@@ -521,6 +562,22 @@ class PluginCentraldecontatosMensagem extends CommonDBTM
         $nomes = [];
         foreach (array_unique(array_filter(array_map(fn($l) => (int) $l['users_id'], $linhas))) as $uid) {
             $nomes[$uid] = (string) getUserName($uid);
+        }
+        // Mensagens citadas: busca as originais da conversa pelo id do WhatsApp
+        $ids = array_values(array_unique(array_filter(array_map(fn($l) => (string) $l['citada_wa_id'], $linhas))));
+        if ($ids) {
+            $originais = [];
+            foreach ($DB->request(['FROM' => self::TABELA, 'WHERE' => ['conversas_id' => $conversas_id, 'wa_id' => $ids]]) as $o) {
+                $originais[(string) $o['wa_id']] = $o;
+            }
+            $conversa = PluginCentraldecontatosConversa::obter($conversas_id);
+            $contato = $conversa ? PluginCentraldecontatosConversa::rotulo($conversa) : 'Contato';
+            foreach ($linhas as &$l) {
+                if ((string) $l['citada_wa_id'] !== '') {
+                    $l['_citada'] = self::citadaParaTela($l, $originais[(string) $l['citada_wa_id']] ?? null, $contato);
+                }
+            }
+            unset($l);
         }
         return array_map(fn($l) => self::paraTela($l, $nomes), $linhas);
     }

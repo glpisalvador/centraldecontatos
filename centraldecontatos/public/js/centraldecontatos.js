@@ -163,17 +163,16 @@
 
     // ------------------------------------------------------------------ WhatsApp
 
-    var abrirWhatsapp = function (raiz, nome, numero, numeroWa, forcarLink) {
+    var abrirWhatsapp = function (raiz, nome, numero, numeroWa) {
         var d = dadosDe(raiz);
         // Servidor WhatsApp próprio: a conversa acontece aqui no GLPI
-        if (!forcarLink && d.servidor_whatsapp && window.CentraldecontatosChat) {
+        if (d.servidor_whatsapp && window.CentraldecontatosChat) {
             window.CentraldecontatosChat.abrirModal({
                 telefone: numeroWa,
                 nome: nome || '',
                 itemtype: d.itemtype,
                 items_id: d.items_id,
-                rascunho: preencher(d.whatsapp, raiz, nome),
-                aoLink: function () { abrirWhatsapp(raiz, nome, numero, numeroWa, true); }
+                rascunho: preencher(d.whatsapp, raiz, nome)
             });
             return;
         }

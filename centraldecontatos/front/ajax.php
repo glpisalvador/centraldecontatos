@@ -368,6 +368,22 @@ try {
             $r = $V::limpar((int) $c['id']);
             $responder(['success' => $r['ok'], 'mensagem' => $r['mensagem'], 'conversa' => $V::paraTela($V::obter((int) $c['id']))]);
 
+        case 'validacoes':
+        case 'pedir_validacao':
+            $c = $conversaDoPost();
+            $tipo = (string) $c['itemtype'];
+            $obj = isset(PluginCentraldecontatosValidacao::TIPOS[$tipo]) ? new $tipo() : null;
+            if (!$obj || !$obj->getFromDB((int) $c['items_id']) || !$obj->canViewItem()) {
+                $falhar('Vincule a conversa a um chamado ou mudança para pedir validação.');
+            }
+            if ($acao === 'validacoes') {
+                $responder(['success' => true, 'item' => $V::rotuloItem($tipo, (int) $obj->getID()), 'validacoes' => PluginCentraldecontatosValidacao::pendentesDoItem($obj, $c)]);
+            }
+            session_write_close();
+            @set_time_limit(60);
+            [$ok, $mensagem] = PluginCentraldecontatosValidacao::enviar($c, $obj, (int) ($_POST['validacao_id'] ?? 0));
+            $responder(['success' => $ok, 'mensagem' => $mensagem]);
+
         case 'arquivar':
             $c = $conversaDoPost();
             $V::arquivar((int) $c['id'], !empty($_POST['valor']));
